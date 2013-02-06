@@ -1,0 +1,4 @@
+Position of modified scripts, which are part of another repositories
+
+shape_fitting.py  ../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/
+Models.py         ../visual_feedback/clothing_models/src/clothing_models/
