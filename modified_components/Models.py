@@ -179,13 +179,13 @@ class Model:
         max_y = max(ys)
         return (0.5*(min_x + max_x),0.5*(min_y + max_y))
         
-    def translate(self,trans):
+    def translate(self,trans,update_initial_model=False):
         abstract
         
-    def rotate(self,angle,origin=None):
+    def rotate(self,angle,origin=None,update_initial_model=False):
         abstract
         
-    def scale(self,amt,origin=None):
+    def scale(self,amt,origin=None,update_initial_model=False):
         abstract
     
     def params(self):
@@ -284,15 +284,15 @@ class Point_Model(Model):
         
 
                 
-    def translate(self,trans):
+    def translate(self,trans,update_initial_model=False):
         self.vertices = translate_pts(self.vertices,trans)
         
-    def rotate(self,angle,origin=None):
+    def rotate(self,angle,origin=None,update_initial_model=False):
         if not origin:
             origin = self.center()
         self.vertices = rotate_pts(self.vertices,angle,origin)
         
-    def scale(self,amt,origin=None):
+    def scale(self,amt,origin=None,update_initial_model=False):
         if not origin:
             origin = self.center()
         self.vertices = scale_pts(self.vertices,amt,origin)
@@ -575,16 +575,19 @@ class Point_Model_Folded(Point_Model):
     def preferred_delta(self):
         return 1.0
         
-    def translate(self,trans):
-        self.initial_model.translate(trans)
+    def translate(self,trans, update_initial_model=False):
+        if(update_initial_model):
+            self.initial_model.translate(trans)
         Point_Model.translate(self,trans)
         
-    def rotate(self,angle,origin=None):
-        self.initial_model.rotate(angle,origin)
+    def rotate(self,angle,origin=None, update_initial_model=False):
+        if(update_initial_model):
+            self.initial_model.rotate(angle,origin)
         Point_Model.rotate(self,angle,origin)
         
-    def scale(self,amt,origin=None):
-        self.initial_model.scale(amt,origin)
+    def scale(self,amt,origin=None, update_initial_model=False):
+        if(update_initial_model):
+            self.initial_model.scale(amt,origin)
         Point_Model.scale(self,amt,origin)
                
 class Point_Model_Folded_Robust(Point_Model_Folded):

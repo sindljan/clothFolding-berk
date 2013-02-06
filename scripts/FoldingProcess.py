@@ -52,7 +52,7 @@ class FoldMaker:
     def get_folded_model(self,foldLine):
         #do the fold line
         noise = 0
-        print str(foldLine)
+        print "fold line = " + str(foldLine)
         for pt in foldLine:
             numWithNoise = (pt[0] + noise, pt[1])
             self.foldline_pts.append(numWithNoise)
@@ -60,7 +60,7 @@ class FoldMaker:
         self.foldline = Vector2D.make_ln_from_pts(self.foldline_pts[0],self.foldline_pts[1])
         ln_start = Vector2D.intercept(self.foldline,Vector2D.horiz_ln(y=0))
         ln_end = Vector2D.intercept(self.foldline,Vector2D.horiz_ln(y=self.background.height))
-        
+
         #visualisation
         cv.Line(self.background,(int(ln_start[0]),int(ln_start[1])),(int(ln_end[0]),int(ln_end[1])),cv.CV_RGB(0,0,0))
         cv.Circle(self.background,self.foldline_pts[0],4,cv.CV_RGB(0,255,0))
@@ -228,10 +228,10 @@ def get_fold_line(model,i):
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-20)
-            br.translate(0,-20)
-            tl.translate(0,20)
-            tr.translate(0,20)
+            bl.translate(0,-30)
+            br.translate(0,-30)
+            tl.translate(0,30)
+            tr.translate(0,30)
             
             foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
@@ -263,7 +263,7 @@ def get_fold_line(model,i):
 #   @param image An image of folded object
 #   @return A new model with fold.
 def create_folded_model(_model, _image, _foldLine):
-
+    show_message("CREATE FOLDED MODEL", MsgTypes.debug)
     fm = FoldMaker(_model,_image)
     modelWithFold = fm.get_folded_model(_foldLine)
     
@@ -295,7 +295,7 @@ def create_folded_model(_model, _image, _foldLine):
 #   @param image the image that has to be fitted.
 #   @return Fitted model
 def fit_model_to_image(model,image):
-    show_message("Model fitter has started.", MsgTypes.info);
+    show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
     # initialization
     background = thresholding.WHITE_BG
     silent = False # true = silent, false = verbose
@@ -338,7 +338,6 @@ def fit_model_to_image(model,image):
     #"""
     fitted_model.set_image(None)
     show_message("Model verticies after fitting: " + str(fitted_model.polygon_vertices_int()), MsgTypes.info);
-    show_message("Model fitter finished.", MsgTypes.info);
     
     return fitted_model
         
@@ -357,6 +356,7 @@ def get_initial_model():
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
 def take_picture(index):
+    show_message("TAKE PICTURE", MsgTypes.debug)
     path = "/media/Data/clothImages/towel/im%02d.JPG" % index
     try:
         img = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)

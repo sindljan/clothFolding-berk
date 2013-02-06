@@ -151,7 +151,7 @@ class ShapeFitter:
                 #Do the same to the actual model
             
             # translate model
-            model.translate(displ)
+            model.translate(displ,True)
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Translate model")
@@ -165,7 +165,7 @@ class ShapeFitter:
             
             #rotate model
             if self.ROTATE:
-                model.rotate(-1*angle,real_center)
+                model.rotate(-1*angle,real_center,True)
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Rotate model")
@@ -178,7 +178,7 @@ class ShapeFitter:
             #"""
                 
             #scale model
-            model.scale(scale,real_center)       
+            model.scale(scale,real_center,True)       
             if SHOW_SCALED_MODEL:
                 model.draw_to_image(img_annotated,cv.CV_RGB(0,0,255))
             """ DEBUG
