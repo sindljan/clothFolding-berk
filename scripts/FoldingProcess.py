@@ -92,7 +92,7 @@ def main(args):
     #Get initial model
     model = get_initial_model()
     #fit the model to the image
-    model = fit_model_to_image(model,unw_img)
+  #  model = fit_model_to_image(model,unw_img)
     #for each desired fold
     NumOfFolds = 0
     if(TYPE == ASYMM):
@@ -386,6 +386,7 @@ def get_homography():
 #  @param text Text of the message
 #  @param msgType Type of message. One of the elements of MsgTypes class.
 def show_message(text,msgType):
+    return
     if(msgType == MsgTypes.info):
         print "INFO: " + text
     elif(msgType == MsgTypes.debug):
