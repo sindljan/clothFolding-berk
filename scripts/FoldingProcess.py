@@ -49,7 +49,7 @@ class FoldMaker:
         cv.PolyLine(self.background,[_model.polygon_vertices_int()],1,cv.CV_RGB(255,0,0),2)
         cv.ShowImage("Fold visualisation",self.background )
 
-    def getFoldedModel(self,foldLine):
+    def get_folded_model(self,foldLine):
         #do the fold line
         noise = 0
         for pt in foldLine:
@@ -83,39 +83,39 @@ class FoldMaker:
 def main(args):
     imgStartIndex = 1
     #take an initial image from camera
-    img = takePicture(imgStartIndex)
+    img = take_picture(imgStartIndex)
     #compute a homography
-    H = getHomography()
+    H = get_homography()
     #unwarped the image. Turn the image into the top view.
     unw_img = cv.CloneImage(img)
     cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
     #Get initial model
-    model = getInitialModel()
+    model = get_initial_model()
     #fit the model to the image
-    model = fitModelToImage(model,unw_img)
+    model = fit_model_to_image(model,unw_img)
     #for each desired fold
     NumOfFolds = 0
     if(TYPE == ASYMM):
         NumOfFolds = 2
     for i in range(1,NumOfFolds+1):
-        showMessage("Do fold num: %02.d from %02.d" %(i,NumOfFolds), MsgTypes.info)
+        show_message("Do fold num: %02.d from %02.d" %(i,NumOfFolds), MsgTypes.info)
         #create a fold
-        L = getFoldLine(model,i);
+        L = get_fold_line(model,i);
         #create a new model with fold
             #print str(model.polygon_vertices_int())
-        foldedModel = createFoldedModel(model,unw_img,L)
+        foldedModel = create_folded_model(model,unw_img,L)
             #print str(model.polygon_vertices_int())
         #excute a fold
-        if(executeFold(model,foldedModel,L) != FoldResults.succesfull):
+        if(execute_fold(model,foldedModel,L) != FoldResults.succesfull):
             return 1
         model = foldedModel
         #take an image
-        img = takePicture(imgStartIndex + i)
+        img = take_picture(imgStartIndex + i)
         #unwarp image
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        #model = fitModelToImage(model,unw_img)
+        #model = fit_model_to_image(model,unw_img)
 
 ## Execute fold according to the fold line
 #
@@ -123,15 +123,15 @@ def main(args):
 #   @param foldedModel The model how an observed object would look like after fold
 #   @param foldLine The fold line.
 #   @return Return how succesfull the folding process was.
-def executeFold(model,foldedModel,foldLine):
+def execute_fold(model,foldedModel,foldLine):
     # selected points to be grasped
-    #raw_input("before getGraspPoints...")
-    gps = getGraspPoints(model,foldedModel,foldLine)
+    #raw_input("before get_grasp_points...")
+    gps = get_grasp_points(model,foldedModel,foldLine)
     if( gps == None):
         return FoldResults.noGraspedPoints
     # deffine a new positin of that points
     #raw_input("before getNewPositionOfGraspPoints...")
-    np_gps = getNewGraspPointsPosition(gps,foldLine)
+    np_gps = get_new_grasp_points_position(gps,foldLine)
     # this part would be done by my hand. literally
         # grasped the points
         # move the grasped points to the defined position
@@ -144,12 +144,12 @@ def executeFold(model,foldedModel,foldLine):
 #   @param points The point to be translate.
 #   @param foldLine The fold line for mirroring.
 #   @return List of tuples that represents a new position(int the image) of grasped points. 
-def getNewGraspPointsPosition(points,foldLine):
+def get_new_grasp_points_position(points,foldLine):
     mirrored_pts = []
     for pt in points:
         mirrored_pts.append(Vector2D.mirror_pt(pt,foldLine))
         
-    showMessage("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
+    show_message("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
     return mirrored_pts
 
 ## Return a list of points to be grasped by a robot
@@ -159,12 +159,12 @@ def getNewGraspPointsPosition(points,foldLine):
 #   @param model The model of current state of an obseved object
 #   @param foldedModel The model how an observed object would look like after fold
 #   @return List of tuples that represents a position(int the image) of points to be grasped.
-def getGraspPoints(model,foldedModel,foldLine): 
+def get_grasp_points(model,foldedModel,foldLine): 
     gps = []
     pointsInModel = model.polygon_vertices_int()
     pointsInFoldedModel = foldedModel.polygon_vertices_int()
-    showMessage("Model points: " + str(pointsInModel), MsgTypes.debug)
-    showMessage("Folded model points: " + str(pointsInFoldedModel), MsgTypes.debug)
+    show_message("Model points: " + str(pointsInModel), MsgTypes.debug)
+    show_message("Folded model points: " + str(pointsInFoldedModel), MsgTypes.debug)
     
     # select a points that changes a place
     for pt in pointsInModel:
@@ -172,7 +172,7 @@ def getGraspPoints(model,foldedModel,foldLine):
             pointsInFoldedModel.index(pt)
         except:
             gps.append(pt)
-    showMessage("Grasped points: " + str(gps), MsgTypes.debug)
+    show_message("Grasped points: " + str(gps), MsgTypes.debug)
     
     if(len(gps) >= 2):
         # select two points with the biggest distance (eucledian) from fold line
@@ -181,9 +181,9 @@ def getGraspPoints(model,foldedModel,foldLine):
         fmdp = None;
         smdp = None;
         for pt in gps:
-            #dist = Geometry2D.ptLineDistance(tupleToPoint(pt),tuplesToLine(foldLine))
-            dist = getDist(pt,foldLine)
-            showMessage( "Distant between point and line = " + str(dist) + " line = " + str(foldLine) + " point = " + str(pt), MsgTypes.debug)
+            #dist = Geometry2D.ptLineDistance(tuple_to_point(pt),tuples_to_line(foldLine))
+            dist = point_line_distance(pt,foldLine)
+            show_message( "Distant between point and line = " + str(dist) + " line = " + str(foldLine) + " point = " + str(pt), MsgTypes.debug)
             if(dist > fmd):
                 fmd = dist
                 fmdp = pt
@@ -194,22 +194,22 @@ def getGraspPoints(model,foldedModel,foldLine):
     elif(len(gps) < 2):
          gps = None
     
-    showMessage("Selected grasped points: " + str(gps), MsgTypes.info)
+    show_message("Selected grasped points: " + str(gps), MsgTypes.info)
     return gps
 
-def getDist(pt,foldLine):
+def point_line_distance(pt,foldLine):
     #www.mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
     pt1 = foldLine[0] 
     pt2 = foldLine[1] 
     dist = abs((pt2[0]-pt1[0])*(pt1[1]-pt[1])-(pt1[0]-pt[0])*(pt2[1]-pt1[1]))/math.sqrt(pow((pt2[0]-pt1[0]),2)+pow((pt2[1]-pt1[1]),2))
     return dist
 
-def tuplesToLine(pts):
+def tuples_to_line(pts):
     pt1 = pts[0]
     pt2 = pts[1]
-    return Geometry2D.Line(tupleToPoint(pt1),tupleToPoint(pt2))
+    return Geometry2D.Line(tuple_to_point(pt1),tuple_to_point(pt2))
     
-def tupleToPoint(pt):
+def tuple_to_point(pt):
     return Geometry2D.Point(pt[0],pt[1])
    
 ## Creates fold according to the model current state and order of fold
@@ -218,7 +218,7 @@ def tupleToPoint(pt):
 #   @param model The model fitted to observed object.
 #   @param i Index that defines fold order
 #   @return fold line as two points in 2D space
-def getFoldLine(model,i):
+def get_fold_line(model,i):
     foldStart = None
     foldEnd = None
     
@@ -226,7 +226,7 @@ def getFoldLine(model,i):
         #towel
         if(i == 1):
             #Fold in half
-            showMessage("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
+            show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
             bl.translate(0,-1)
@@ -238,7 +238,7 @@ def getFoldLine(model,i):
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
         elif(i == 2):
             #Fold in half again
-            showMessage("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
+            show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
             [tr,tl,bl,br,a,a,a,a] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             bl.translate(-3,0)
             br.translate(3,0)
@@ -248,25 +248,25 @@ def getFoldLine(model,i):
             foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL
     else:
-        showMessage("Not implemented type of cloth",MsgTypes.exception)
+        show_message("Not implemented type of cloth",MsgTypes.exception)
         sys.exit()
         
     foldLine = [foldStart, foldEnd]
-    showMessage("New fold line: " + str(foldLine),MsgTypes.info)
+    show_message("New fold line: " + str(foldLine),MsgTypes.info)
     return foldLine;
 
 ##  Create a new model by folding the old one.
 #
-#   The function createFoldedModel takes an unfolded model on its input 
+#   The function create_folded_model takes an unfolded model on its input 
 #   and image of the folded object. The function visualise both inputs 
 #   in a graphical window. User would create a new foldline here.
 #   @param model A model to be folded
 #   @param image An image of folded object
 #   @return A new model with fold.
-def createFoldedModel(_model, _image, _foldLine):
+def create_folded_model(_model, _image, _foldLine):
 
     fm = FoldMaker(_model,_image)
-    modelWithFold = fm.getFoldedModel(_foldLine)
+    modelWithFold = fm.get_folded_model(_foldLine)
     
     if(modelWithFold == None):
         sys.exit()
@@ -282,7 +282,7 @@ def createFoldedModel(_model, _image, _foldLine):
     print "/************EndOfTest*************/"
     #"""
     
-    showMessage("Verticies of a model with fold: " + str(modelWithFold.polygon_vertices_int()), MsgTypes.info);
+    show_message("Verticies of a model with fold: " + str(modelWithFold.polygon_vertices_int()), MsgTypes.info);
     return modelWithFold
     
 ##  Fit a model to an image
@@ -295,8 +295,8 @@ def createFoldedModel(_model, _image, _foldLine):
 #   @param model The model that has to be fitted.
 #   @param image the image that has to be fitted.
 #   @return Fitted model
-def fitModelToImage(model,image):
-    showMessage("Model fitter has started.", MsgTypes.info);
+def fit_model_to_image(model,image):
+    show_message("Model fitter has started.", MsgTypes.info);
     # initialization
     background = thresholding.WHITE_BG
     silent = True # true = silent, false = verbose
@@ -330,15 +330,15 @@ def fitModelToImage(model,image):
     print "/************EndOfTest*************/"
     #"""
     fitted_model.set_image(None)
-    showMessage("Model verticies after fitting: " + str(model.polygon_vertices_int()), MsgTypes.info);
-    showMessage("Model fitter finished.", MsgTypes.info);
+    show_message("Model verticies after fitting: " + str(model.polygon_vertices_int()), MsgTypes.info);
+    show_message("Model fitter finished.", MsgTypes.info);
     
     return fitted_model
         
 ##  Load an initial model from HDD
 #
 #   @return Model of observed object
-def getInitialModel():
+def get_initial_model():
     #unpicle model from file
     modelPath = "/media/Data/models/im_towel.pickle"
     initialModel = pickle.load(open(modelPath))
@@ -349,14 +349,14 @@ def getInitialModel():
 #   Images are now stored on a local HDD
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
-def takePicture(index):
+def take_picture(index):
     path = "/media/Data/clothImages/towel/im%02d.JPG" % index
     try:
         img = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
-        showMessage("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
+        show_message("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
         sys.exit()
-    showMessage("Loading image from the file " + path, MsgTypes.info)
+    show_message("Loading image from the file " + path, MsgTypes.info)
     return img
 
 ## Compute and return homography between side and top view
@@ -364,7 +364,7 @@ def takePicture(index):
 #  It takes the current view into one directly above the table. Correspondence 
 #    between points was made by a hand.
 #  @return 3x3 homography matrix
-def getHomography():
+def get_homography():
     # set up source points
     srcPoints = cv.fromarray(np.matrix([[203,374],[432,376],[431,137],[201,139]], dtype=float))
     # set up destination points
@@ -372,14 +372,14 @@ def getHomography():
     # compute homography
     H = cv.CreateMat(3,3,cv.CV_32FC1)
     cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
-    showMessage("Computed homography" + str(np.asarray(H)), MsgTypes.info)
+    show_message("Computed homography" + str(np.asarray(H)), MsgTypes.info)
     return H
     
 ## Show a message according to the setup verbosity and append a proper label
 #
 #  @param text Text of the message
 #  @param msgType Type of message. One of the elements of MsgTypes class.
-def showMessage(text,msgType):
+def show_message(text,msgType):
     if(msgType == MsgTypes.info):
         print "INFO: " + text
     elif(msgType == MsgTypes.debug):
