@@ -305,7 +305,9 @@ class ShapeFitter:
         if(self.SHOW):
             cv.NamedWindow("Optimizing")
             img = cv.CloneImage(model.image)
-            model.from_params(params).draw_to_image(img,cv.CV_RGB(255,0,0))
+            tmpModel = model.from_params(params)
+            if(tmpModel != None):
+                tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
             cv.ShowImage("Optimizing",img)
             cv.WaitKey(50)
         # optimalization of chosen parameter
@@ -314,7 +316,12 @@ class ShapeFitter:
             for i in range(len(params)):
                 new_params = list(params)
                 new_params[i] += deltas[i]
-                new_score = -1 * model.from_params(new_params).score(contour, image)
+                tmpModel = model.from_params(new_params)
+                if(tmpModel != None):
+                    new_score = -1 * tmpModel.score(contour, image)
+                else:
+                    new_score = score - 1
+                    
                 if new_score > score:
                     params = new_params
                     score = new_score
@@ -323,7 +330,11 @@ class ShapeFitter:
                     deltas[i] *= -1
                     new_params = list(params)
                     new_params[i] += deltas[i]
-                    new_score = -1 * model.from_params(new_params).score(contour,image)
+                    tmpModel = model.from_params(new_params)
+                    if(tmpModel != None):
+                        new_score = -1 * tmpModel.score(contour, image)
+                    else:
+                        new_score = score - 1
                     if new_score > score:
                         params = new_params
                         score = new_score
@@ -333,7 +344,9 @@ class ShapeFitter:
             self.printout("Current best score is %f"%score)
             if(self.SHOW):
                 img = cv.CloneImage(model.image)
-                model.from_params(params).draw_to_image(img,cv.CV_RGB(255,0,0))
+                tmpModel = model.from_params(params)
+                if(tmpModel != None):
+                    tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
                 if SAVE_ITERS:
                     cv.SaveImage("%s_iter_%d.png"%(mode,it),img)
                 cv.ShowImage("Optimizing",img)

@@ -51,16 +51,8 @@ class FoldMaker:
 
     def get_folded_model(self,foldLine):
         #do the fold line
-        """
-        noise = 0
-        print "fold line = " + str(foldLine)
-        for pt in foldLine:
-            numWithNoise = (pt[0] + noise, pt[1])
-            self.foldline_pts.append(numWithNoise)
-            noise = noise + 1
-        """
         # A function Vector2D.intercept doesnt work if x or y of pts are same. Therofre I put some noise if neded
-        noise = 1;
+        noise = -1;
         difX = (foldLine[0])[0] - (foldLine[1])[0]
         difY = (foldLine[0])[1] - (foldLine[1])[1]
         if ((difX == 0) and (difY == 0)):
@@ -245,10 +237,10 @@ def get_fold_line(model,i):
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-30)
-            br.translate(0,-30)
-            tl.translate(0,30)
-            tr.translate(0,30)
+            bl.translate(0,-10)
+            br.translate(0,-10)
+            tl.translate(0,10)
+            tr.translate(0,10)
             
             foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
@@ -256,10 +248,10 @@ def get_fold_line(model,i):
             #Fold in half again
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
             [tr,tl,bl,br] = ([Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()])[0:4]
-            bl.translate(-30,0)
-            br.translate(30,0)
-            tl.translate(-30,0)
-            tr.translate(30,0)
+            bl.translate(-10,0)
+            br.translate(10,0)
+            tl.translate(-10,0)
+            tr.translate(10,0)
             
             foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL

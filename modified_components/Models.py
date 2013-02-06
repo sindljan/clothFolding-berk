@@ -589,6 +589,14 @@ class Point_Model_Folded(Point_Model):
         if(update_initial_model):
             self.initial_model.scale(amt,origin)
         Point_Model.scale(self,amt,origin)
+        
+    def from_params(self,params):
+        newModel = Point_Model.from_params(self,params)
+        if( len(self.polygon_vertices()) == len(newModel.polygon_vertices()) ):
+            return newModel
+        print "from_params - illegal model"
+        return None
+        
                
 class Point_Model_Folded_Robust(Point_Model_Folded):
 
