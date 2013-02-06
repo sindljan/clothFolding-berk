@@ -88,11 +88,9 @@ class ShapeFitter:
             cv.DrawContours(img_annotated,shape_contour,cv.CV_RGB(255,0,0),cv.CV_RGB(255,0,0),0,1,8,(0,0))
         if self.INITIALIZE:
             self.printout("INITIALIZING")
-            print "pi of contour" #DEBUG
             (real_center,real_top,real_theta,real_scale) = get_principle_info(shape_contour)
             if SHOW_UNSCALED_MODEL:
                 model.draw_to_image(img_annotated,cv.CV_RGB(0,0,255))
-            print "pi of model" #DEBUG
             model_contour = model.vertices_dense(constant_length=False,density=30,includeFoldLine = False)
             (model_center,model_top,model_theta,model_scale) = get_principle_info(model_contour)
             displ = displacement(model_center,real_center)
@@ -113,17 +111,14 @@ class ShapeFitter:
             angle = model_theta - real_theta
             if self.ORIENT_OPT:
                 angle = 0
-            print str([real_scale,model_scale])  
             scale = real_scale/float(model_scale)
-            print str(scale)  
             if scale < 0.25:
                 scale = 1
             model_trans = translate_poly(model.polygon_vertices(),displ)
             model_rot = rotate_poly(model_trans,-1*angle,real_center)
             model_scaled = scale_poly(model_rot,scale,real_center)
                       
-            
-            #"""
+            """ DEBUG
             print "/**************Test****************/"
             A = [ (int(pt[0]),int(pt[1])) for pt in model_trans]
             B = [ (int(pt[0]),int(pt[1])) for pt in model_rot]
@@ -156,8 +151,8 @@ class ShapeFitter:
                 #Do the same to the actual model
             
             # translate model
-            #model.translate(displ)
-            #"""
+            model.translate(displ)
+            """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Translate model")
             img = cv.CloneImage(img_annotated)
@@ -170,9 +165,8 @@ class ShapeFitter:
             
             #rotate model
             if self.ROTATE:
-                pass
-                #model.rotate(-1*angle,real_center)
-            #"""
+                model.rotate(-1*angle,real_center)
+            """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Rotate model")
             img = cv.CloneImage(img_annotated)
@@ -187,7 +181,7 @@ class ShapeFitter:
             model.scale(scale,real_center)       
             if SHOW_SCALED_MODEL:
                 model.draw_to_image(img_annotated,cv.CV_RGB(0,0,255))
-            #"""
+            """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Scale model")
             img = cv.CloneImage(img_annotated)
@@ -339,7 +333,7 @@ def get_top(shape,center,theta):
         scale = 0
         (r_x,r_y,r_w,r_h) = cv.BoundingRect(shape)
         
-        #""" DEBUG
+        """ DEBUG
         print "/**************get_top****************/"
         cv.NamedWindow("Debug window")
         img = cv.CreateImage((r_w+400,r_h+200),8,3)

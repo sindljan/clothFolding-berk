@@ -247,7 +247,6 @@ class Model:
 #Abstract class for a model which is fully defined by its points (i.e., has no other parameters like symmline)
 class Point_Model(Model):
     def __init__(self,*vertices_and_params):
-        
         try:
             assert len(vertices_and_params) == len(self.variable_pt_names()) + len(self.variable_param_names())
         except Exception,e:
@@ -452,6 +451,7 @@ class Point_Model_Folded(Point_Model):
         self.initial_model = initial_model
         self.image = None
         Point_Model.__init__(self,*pts)
+        
 
     def name(self):
         return "Folded " + self.initial_model.name()
@@ -526,6 +526,7 @@ class Point_Model_Folded(Point_Model):
     def foldline(self):
         return make_ln_from_pts(self.fold_bottom(),self.fold_top())
         #return make_seg(self.fold_bottom(),self.fold_top())
+        
     def foldseg(self):
         #return make_ln_from_pts(self.fold_bottom(),self.fold_top())
         return make_seg(self.fold_bottom(),self.fold_top())
@@ -541,7 +542,6 @@ class Point_Model_Folded(Point_Model):
         return True
         
     def draw_contour(self,img,color, thickness=2, includeFoldLine = True):
-
         # new version sindljan
         if(includeFoldLine):
             self.draw_line(img,intercept(self.foldline(),horiz_ln(y=0.0)),intercept(self.foldline(),horiz_ln(y=img.height)),color, thickness)
@@ -567,6 +567,23 @@ class Point_Model_Folded(Point_Model):
     def preferred_delta(self):
         return 1.0
         
+    def translate(self,trans):
+        self.initial_model.translate(trans)
+        self.vertices = translate_pts(self.vertices,trans)
+        
+    def rotate(self,angle,origin=None):
+        self.initial_model.rotate(angle,origin)
+        if not origin:
+            origin = self.center()
+        self.vertices = rotate_pts(self.vertices,angle,origin)
+        
+    def scale(self,amt,origin=None):
+        self.initial_model.scale(amt,origin)
+        if not origin:
+            origin = self.center()
+        self.vertices = scale_pts(self.vertices,amt,origin)
+        self.scalar_params = [p*amt for p in self.scalar_params]
+               
 class Point_Model_Folded_Robust(Point_Model_Folded):
 
 
