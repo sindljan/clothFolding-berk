@@ -6,8 +6,8 @@ Whole repository is written as a single ROS package.
 
 Important files
 -----------------------------------
-*scripts/FoldingProcess.py - script that automatize flding process and operation with cloth model
-*manifest.xml - This file contains ros packages that are used in scripts.
+* scripts/FoldingProcess.py - script that automatize flding process and operation with cloth model
+* manifest.xml - This file contains ros packages that are used in scripts.
 
 How to make it run
 -----------------------------------
