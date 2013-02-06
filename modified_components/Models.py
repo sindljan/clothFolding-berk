@@ -575,19 +575,16 @@ class Point_Model_Folded(Point_Model):
     def preferred_delta(self):
         return 1.0
         
-    def translate(self,trans,scale_init_model=False):
-        if(scale_init_model):
-            self.initial_model.translate(trans)
+    def translate(self,trans):
+        self.initial_model.translate(trans)
         Point_Model.translate(self,trans)
         
-    def rotate(self,angle,origin=None,scale_init_model=False):
-        if(scale_init_model):
-            self.initial_model.rotate(angle,origin)
+    def rotate(self,angle,origin=None):
+        self.initial_model.rotate(angle,origin)
         Point_Model.rotate(self,angle,origin)
         
-    def scale(self,amt,origin=None,scale_init_model=False):
-        if(scale_init_model):
-            self.initial_model.scale(amt,origin)
+    def scale(self,amt,origin=None):
+        self.initial_model.scale(amt,origin)
         Point_Model.scale(self,amt,origin)
                
 class Point_Model_Folded_Robust(Point_Model_Folded):

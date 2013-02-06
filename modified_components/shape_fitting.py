@@ -15,7 +15,7 @@ import pickle
 from visual_feedback_utils import Vector2D
 from clothing_models import Models
 
-SHOW_CONTOURS = False 			# Draw the contours to the annotated image?
+SHOW_CONTOURS = True 			# Draw the contours to the annotated image?
 SHOW_INIT_PTS = False 			# Draw the center and top points to the image?
 SHOW_UNSCALED_MODEL = False 	# Draw the model (pre-initial scaling) on the annotated image?
 SHOW_SCALED_MODEL = False 		# Draw the model (post-initial scaling) on the annotated image?
@@ -151,7 +151,7 @@ class ShapeFitter:
                 #Do the same to the actual model
             
             # translate model
-            model.translate(displ,True)
+            model.translate(displ)
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Translate model")
@@ -165,7 +165,7 @@ class ShapeFitter:
             
             #rotate model
             if self.ROTATE:
-                model.rotate(-1*angle,real_center,True)
+                model.rotate(-1*angle,real_center)
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Rotate model")
@@ -178,7 +178,7 @@ class ShapeFitter:
             #"""
                 
             #scale model
-            model.scale(scale,real_center,True)       
+            model.scale(scale,real_center)       
             if SHOW_SCALED_MODEL:
                 model.draw_to_image(img_annotated,cv.CV_RGB(0,0,255))
             """ DEBUG
