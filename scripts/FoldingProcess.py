@@ -52,6 +52,7 @@ class FoldMaker:
     def get_folded_model(self,foldLine):
         #do the fold line
         noise = 0
+        print str(foldLine)
         for pt in foldLine:
             numWithNoise = (pt[0] + noise, pt[1])
             self.foldline_pts.append(numWithNoise)
@@ -227,10 +228,10 @@ def get_fold_line(model,i):
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-2)
-            br.translate(0,-2)
-            tl.translate(0,2)
-            tr.translate(0,2)
+            bl.translate(0,-20)
+            br.translate(0,-20)
+            tl.translate(0,20)
+            tr.translate(0,20)
             
             foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
@@ -297,7 +298,7 @@ def fit_model_to_image(model,image):
     show_message("Model fitter has started.", MsgTypes.info);
     # initialization
     background = thresholding.WHITE_BG
-    silent = True # true = silent, false = verbose
+    silent = False # true = silent, false = verbose
     show_graphics = True
     num_iters = 50
     

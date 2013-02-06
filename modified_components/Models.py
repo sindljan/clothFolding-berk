@@ -307,13 +307,18 @@ class Point_Model(Model):
                 rel_pt = self.__getattr__(rel_pt_name)()
                 dx = pt_x(pt) - pt_x(rel_pt)
                 dy = pt_y(pt) - pt_y(rel_pt)
+                #print name + ' dx={0} dy={1}.'.format(dx,dy) #DEBUG
                 output.append(dx)
                 output.append(dy)
             else:
+                #print name + ' dx={0} dy={1}.'.format(pt_x(pt),pt_y(pt)) #DEBUG
                 output.append(pt_x(pt))
                 output.append(pt_y(pt))
         for param in self.scalar_params:
+            #print "Scalar " + str(param) #DEBUG
             output.append(param)
+            
+        #print "All params = " + str(output) #DEBUG
         return output
     
     #Reads in a list of x,y values, and creates a new instance of myself with those points    
@@ -322,6 +327,9 @@ class Point_Model(Model):
         x = None
         point_params = params[:2*len(self.variable_pt_names())]
         scalar_params = params[2*len(self.variable_pt_names()):]
+        #print "variable_pt_names() " + str(self.variable_pt_names()) #DEBUG
+        #print "point params " + str(point_params) #DEBUG
+        #print "scalar params " + str(scalar_params) #DEBUG
         for i,p in enumerate(point_params):
             if i%2 == 0:
                 x = p
@@ -567,22 +575,20 @@ class Point_Model_Folded(Point_Model):
     def preferred_delta(self):
         return 1.0
         
-    def translate(self,trans):
-        self.initial_model.translate(trans)
-        self.vertices = translate_pts(self.vertices,trans)
+    def translate(self,trans,scale_init_model=False):
+        if(scale_init_model):
+            self.initial_model.translate(trans)
+        Point_Model.translate(self,trans)
         
-    def rotate(self,angle,origin=None):
-        self.initial_model.rotate(angle,origin)
-        if not origin:
-            origin = self.center()
-        self.vertices = rotate_pts(self.vertices,angle,origin)
+    def rotate(self,angle,origin=None,scale_init_model=False):
+        if(scale_init_model):
+            self.initial_model.rotate(angle,origin)
+        Point_Model.rotate(self,angle,origin)
         
-    def scale(self,amt,origin=None):
-        self.initial_model.scale(amt,origin)
-        if not origin:
-            origin = self.center()
-        self.vertices = scale_pts(self.vertices,amt,origin)
-        self.scalar_params = [p*amt for p in self.scalar_params]
+    def scale(self,amt,origin=None,scale_init_model=False):
+        if(scale_init_model):
+            self.initial_model.scale(amt,origin)
+        Point_Model.scale(self,amt,origin)
                
 class Point_Model_Folded_Robust(Point_Model_Folded):
 
