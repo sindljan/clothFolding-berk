@@ -532,8 +532,8 @@ class Point_Model_Folded(Point_Model):
         return False
       
     def foldline(self):
-        return make_ln_from_pts(self.fold_bottom(),self.fold_top())
-        #return make_seg(self.fold_bottom(),self.fold_top())
+        #return make_ln_from_pts(self.fold_bottom(),self.fold_top())
+        return make_seg(self.fold_bottom(),self.fold_top())
         
     def foldseg(self):
         #return make_ln_from_pts(self.fold_bottom(),self.fold_top())

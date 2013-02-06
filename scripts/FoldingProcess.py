@@ -51,12 +51,29 @@ class FoldMaker:
 
     def get_folded_model(self,foldLine):
         #do the fold line
+        """
         noise = 0
         print "fold line = " + str(foldLine)
         for pt in foldLine:
             numWithNoise = (pt[0] + noise, pt[1])
             self.foldline_pts.append(numWithNoise)
             noise = noise + 1
+        """
+        # A function Vector2D.intercept doesnt work if x or y of pts are same. Therofre I put some noise if neded
+        noise = 1;
+        difX = (foldLine[0])[0] - (foldLine[1])[0]
+        difY = (foldLine[0])[1] - (foldLine[1])[1]
+        if ((difX == 0) and (difY == 0)):
+            self.foldline_pts.append( ((foldLine[0])[0]+noise,(foldLine[0])[1]+noise) )
+        elif(difX == 0):
+            self.foldline_pts.append( ((foldLine[0])[0]+noise,(foldLine[0])[1]) )
+        elif(difY == 0):
+            self.foldline_pts.append( ((foldLine[0])[0],(foldLine[0])[1]+noise) )
+        else:
+            self.foldline_pts.append(foldLine[0])
+        self.foldline_pts.append(foldLine[1])
+        
+        
         self.foldline = Vector2D.make_ln_from_pts(self.foldline_pts[0],self.foldline_pts[1])
         ln_start = Vector2D.intercept(self.foldline,Vector2D.horiz_ln(y=0))
         ln_end = Vector2D.intercept(self.foldline,Vector2D.horiz_ln(y=self.background.height))
