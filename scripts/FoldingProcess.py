@@ -227,10 +227,10 @@ def get_fold_line(model,i):
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-50)
-            br.translate(0,-50)
-            tl.translate(0,50)
-            tr.translate(0,50)
+            bl.translate(0,-2)
+            br.translate(0,-2)
+            tl.translate(0,2)
+            tr.translate(0,2)
             
             foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
@@ -269,7 +269,7 @@ def create_folded_model(_model, _image, _foldLine):
     if(modelWithFold == None):
         sys.exit()
         
-    #""" 
+    """ 
     print "/**************Test****************/"
     cv.NamedWindow("Debug window")
     img = cv.CloneImage(_image)
@@ -311,7 +311,7 @@ def fit_model_to_image(model,image):
     image_out = cv.CloneImage(image)
     #Use the thresholding module to get the contour out
     shape_contour = thresholding.get_contour(image,bg_mode=background,filter_pr2=False,crop_rect=None)
-    #"""
+    """
     cv.NamedWindow("Debug window")
     img = cv.CloneImage(image)
     cv.PolyLine(img,[shape_contour],1,cv.CV_RGB(0,0,255),1)               
@@ -319,7 +319,7 @@ def fit_model_to_image(model,image):
     cv.WaitKey()
     cv.DestroyWindow("Debug window")
     #"""
-    print str(model.polygon_vertices_int())
+    
     #Use the shaper fitter module to fit the model to image
     fitter = shape_fitting.ShapeFitter(     ORIENT_OPT=orient_opt,  SYMM_OPT=symm_opt,   
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
