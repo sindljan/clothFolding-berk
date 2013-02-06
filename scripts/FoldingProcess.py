@@ -102,9 +102,7 @@ def main(args):
         #create a fold
         L = get_fold_line(model,i);
         #create a new model with fold
-            #print str(model.polygon_vertices_int())
         foldedModel = create_folded_model(model,unw_img,L)
-            #print str(model.polygon_vertices_int())
         #excute a fold
         if(execute_fold(model,foldedModel,L) != FoldResults.succesfull):
             return 1
@@ -115,7 +113,7 @@ def main(args):
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        #model = fit_model_to_image(model,unw_img)
+        model = fit_model_to_image(model,unw_img)
 
 ## Execute fold according to the fold line
 #
@@ -229,21 +227,21 @@ def get_fold_line(model,i):
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
             [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
             # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-1)
-            br.translate(0,-1)
-            tl.translate(0,1)
-            tr.translate(0,1)
+            bl.translate(0,-50)
+            br.translate(0,-50)
+            tl.translate(0,50)
+            tr.translate(0,50)
             
             foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
         elif(i == 2):
             #Fold in half again
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
-            [tr,tl,bl,br,a,a,a,a] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
-            bl.translate(-3,0)
-            br.translate(3,0)
-            tl.translate(-3,0)
-            tr.translate(3,0)
+            [tr,tl,bl,br] = ([Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()])[0:4]
+            bl.translate(-30,0)
+            br.translate(30,0)
+            tl.translate(-30,0)
+            tr.translate(30,0)
             
             foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL
@@ -313,13 +311,21 @@ def fit_model_to_image(model,image):
     image_out = cv.CloneImage(image)
     #Use the thresholding module to get the contour out
     shape_contour = thresholding.get_contour(image,bg_mode=background,filter_pr2=False,crop_rect=None)
+    #"""
+    cv.NamedWindow("Debug window")
+    img = cv.CloneImage(image)
+    cv.PolyLine(img,[shape_contour],1,cv.CV_RGB(0,0,255),1)               
+    cv.ShowImage("Debug window",img)
+    cv.WaitKey()
+    cv.DestroyWindow("Debug window")
+    #"""
+    print str(model.polygon_vertices_int())
     #Use the shaper fitter module to fit the model to image
     fitter = shape_fitting.ShapeFitter(     ORIENT_OPT=orient_opt,  SYMM_OPT=symm_opt,   
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
                                             num_iters=num_iters )
     (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
-    
     """
     print "/**************Test****************/"
     cv.NamedWindow("Debug window")
@@ -330,7 +336,7 @@ def fit_model_to_image(model,image):
     print "/************EndOfTest*************/"
     #"""
     fitted_model.set_image(None)
-    show_message("Model verticies after fitting: " + str(model.polygon_vertices_int()), MsgTypes.info);
+    show_message("Model verticies after fitting: " + str(fitted_model.polygon_vertices_int()), MsgTypes.info);
     show_message("Model fitter finished.", MsgTypes.info);
     
     return fitted_model
