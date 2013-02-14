@@ -1,4 +1,6 @@
 <launch>
-  <node name="kinect" pkg="freenect_camera" type="freenect_node" output="screen"/>
-  <node name="contureFolding" pkg="conture_model_folding" type="FoldingProcess.py" output="screen"/>
+ <!-- Startup Kinect node -->
+  <include file="$(find freenect_launch)/launch/freenect.launch"/>
+ <!-- Startup image capture service -->
+  <node name="ImageCapture" pkg="conture_model_folding" type="ImageReaderService.py" output="screen"/>
 </launch>

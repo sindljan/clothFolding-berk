@@ -100,12 +100,12 @@ def main(args):
     #compute a homography
     H = get_homography()
     #unwarped the image. Turn the image into the top view.
-    unw_img = cv.CloneImage(img)
+    unw_img = cv.CreateImage((800,600),cv.IPL_DEPTH_8U,3)
     cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
     #Get initial model
     model = get_initial_model()
     #fit the model to the image
-    #model = fit_model_to_image(model,unw_img)
+    model = fit_model_to_image(model,unw_img)
     #for each desired fold
     NumOfFolds = 0
     if(TYPE == ASYMM):
@@ -126,7 +126,7 @@ def main(args):
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        #model = fit_model_to_image(model,unw_img)
+        model = fit_model_to_image(model,unw_img)
    
 ## Execute fold according to the fold line
 #
@@ -144,6 +144,7 @@ def execute_fold(model,foldedModel,foldLine):
     #raw_input("before getNewPositionOfGraspPoints...")
     np_gps = get_new_grasp_points_position(gps,foldLine)
     # this part would be done by my hand. literally
+    raw_input("Do the fold and hit enter...")
         # grasped the points
         # move the grasped points to the defined position
         # ungrasp it
@@ -310,7 +311,7 @@ def fit_model_to_image(model,image):
     show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
     # initialization
     background = thresholding.WHITE_BG
-    silent = False # true = silent, false = verbose
+    silent = True # true = silent, false = verbose
     show_graphics = True
     num_iters = 50
     
@@ -374,22 +375,29 @@ def take_picture(index):
     rospy.wait_for_service('get_kinect_image')
     try:
         service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
-        resp = service() #call service and return image
-        takenImage = resp.image
+        msg_resp = service() #call service and return image
+        imData = msg_resp.image
     except rospy.ServiceException, e:
         show_message("Image grabing service failed: %s."%e, MsgTypes.exception)
+        return None
         
     #convert it to format accepted by openCV
     try:
         bridge = CvBridge()
-        takenImage = bridge.imgmsg_to_cv(takenImage,"bgr8")
+        takenImage = bridge.imgmsg_to_cv(imData,"bgr8")
     except CvBridgeError, e:
         show_message("Image conversion error: %s."%e, MsgTypes.exception)
+        return None
     
     #crop image
-    takenImage = cv.GetSubRect(takenImage,(50,50,200,200))
+    roi = (100,80,440,400)
+    cropped = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
+    takenImage = cv.GetSubRect(takenImage,roi)
+    cv.Copy(takenImage,cropped)
+    #cv.SaveImage("./im.png",takenImage)
+    
     #visualise
-    #""" DEBUG
+    """ DEBUG
     print "/**************Test****************/"
     cv.NamedWindow("Image from Kinect")
     cv.ShowImage("Image from Kinect",takenImage)
@@ -397,8 +405,8 @@ def take_picture(index):
     cv.DestroyWindow("Image from Kinect")
     print "/************EndOfTest*************/"
     #"""
-    sys.exit();
-    return takenImage
+    
+    return cropped
 
 ## Compute and return homography between side and top view
 #
@@ -406,10 +414,16 @@ def take_picture(index):
 #    between points was made by a hand.
 #  @return 3x3 homography matrix
 def get_homography():
-    # set up source points
+    # set up source points (model points)
     srcPoints = cv.fromarray(np.matrix([[203,374],[432,376],[431,137],[201,139]], dtype=float))
-    # set up destination points
-    dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
+    # set up destination points (observed object points)
+    #dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
+    dstPoints = cv.fromarray(np.matrix([
+        [173, 303],
+        [289, 302],
+        [284, 239],
+        [184, 235]
+        ], dtype=float))
     # compute homography
     H = cv.CreateMat(3,3,cv.CV_32FC1)
     cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
