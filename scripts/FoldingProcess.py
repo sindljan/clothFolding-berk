@@ -386,6 +386,8 @@ def take_picture(index):
     except CvBridgeError, e:
         show_message("Image conversion error: %s."%e, MsgTypes.exception)
     
+    #crop image
+    takenImage = cv.GetSubRect(takenImage,(50,50,200,200))
     #visualise
     #""" DEBUG
     print "/**************Test****************/"
