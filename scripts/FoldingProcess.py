@@ -159,7 +159,10 @@ def execute_fold(model,foldedModel,foldLine):
 def get_new_grasp_points_position(points,foldLine):
     mirrored_pts = []
     for pt in points:
-        mirrored_pts.append(Vector2D.mirror_pt(pt,foldLine))
+        if(pt != None):
+            mirrored_pts.append(Vector2D.mirror_pt(pt,foldLine))
+        else:
+            show_message("Some of the grasp points wasn't set.", MsgTypes.exception)
         
     show_message("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
     return mirrored_pts
@@ -184,7 +187,7 @@ def get_grasp_points(model,foldedModel,foldLine):
             pointsInFoldedModel.index(pt)
         except:
             gps.append(pt)
-    show_message("Grasped points: " + str(gps), MsgTypes.debug)
+    show_message("Candidates to grasped points: " + str(gps), MsgTypes.debug)
     
     if(len(gps) >= 2):
         # select two points with the biggest distance (eucledian) from fold line
@@ -438,7 +441,7 @@ def show_message(text,msgType):
     if(msgType == MsgTypes.info):
         print "INFO: " + text
     elif(msgType == MsgTypes.debug):
-        return
+        #return
         print "DEBUG: " + text
     elif(msgType == MsgTypes.exception):
         print "ERROR: " + text
