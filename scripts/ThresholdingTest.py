@@ -42,7 +42,7 @@ def get_homography():
 ## End of Support classes ----------------------------------------------    
 
 def main():
-    img = take_picture()
+    img = take_picture(1)
     #compute a homography
     H = get_homography()
     #unwarped the image. Turn the image into the top view.
@@ -66,8 +66,8 @@ def main():
 #   Images are now stored on a local HDD
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
-def take_picture():
-     print "TAKE_PICTURE"
+def take_picture(index):
+    print "TAKE_PICTURE"
     takenImage = None
     
     """
@@ -98,14 +98,12 @@ def take_picture():
     #"""
     
     #""" take a picture from file
-    show_message("TAKE PICTURE", MsgTypes.debug)
-    path = "/media/Data/clothImages/towel/imA%02d.JPG" % index
+    path = "/media/Data/clothImages/towel/imA%02d.png" % index
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
-       show_message("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
+       print "File not found or cannot be loaded. Path = " + path
        sys.exit()
-    show_message("Loading image from the file " + path, MsgTypes.info)
     #"""
     
     #visualise
