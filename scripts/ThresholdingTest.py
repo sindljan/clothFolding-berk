@@ -67,9 +67,11 @@ def main():
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
 def take_picture():
-    print "TAKE_PICTURE"
+     print "TAKE_PICTURE"
     takenImage = None
-    #take a picture
+    
+    """
+    #take a picture from Kinect
     rospy.wait_for_service('get_kinect_image')
     try:
         service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
@@ -82,20 +84,32 @@ def take_picture():
     #convert it to format accepted by openCV
     try:
         bridge = CvBridge()
-        takenImage = bridge.imgmsg_to_cv(imData,"bgr8")
+        image = bridge.imgmsg_to_cv(imData,"bgr8")
     except CvBridgeError, e:
         show_message("Image conversion error: %s."%e, MsgTypes.exception)
         return None
     
     #crop image
-    roi = (100,80,440,400)
-    cropped = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
-    takenImage = cv.GetSubRect(takenImage,roi)
-    cv.Copy(takenImage,cropped)
+    roi = (80,80,480,400)
+    cropped = cv.GetSubRect(image,roi)
+    takenImage = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
+    cv.Copy(cropped,takenImage)
     #cv.SaveImage("./im.png",takenImage)
+    #"""
+    
+    #""" take a picture from file
+    show_message("TAKE PICTURE", MsgTypes.debug)
+    path = "/media/Data/clothImages/towel/imA%02d.JPG" % index
+    try:
+       takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
+    except:
+       show_message("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
+       sys.exit()
+    show_message("Loading image from the file " + path, MsgTypes.info)
+    #"""
     
     #visualise
-    """ DEBUG
+    #""" DEBUG
     print "/**************Test****************/"
     cv.NamedWindow("Image from Kinect")
     cv.ShowImage("Image from Kinect",takenImage)
@@ -104,7 +118,7 @@ def take_picture():
     print "/************EndOfTest*************/"
     #"""
     
-    return cropped
+    return takenImage
 
 
 if __name__ == '__main__':

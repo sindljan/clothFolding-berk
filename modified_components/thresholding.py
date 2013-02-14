@@ -88,7 +88,30 @@ def threshold(image,bg_mode,filter_pr2,crop_rect=None,cam_info=None,listener=Non
         
     elif bg_mode==WHITE_BG:
         #cv.Threshold(image_gray, image_thresh, 200,255, cv.CV_THRESH_BINARY_INV) #image_gray = white for all non-super white, black o/w
-        cv.Threshold(image_gray, image_thresh, 180,200, cv.CV_THRESH_BINARY_INV) #image_gray = white for all non-super white, black o/w
+        shades = cv.CloneImage(image_gray);
+        cv.Threshold(image_gray, shades, 160,255, cv.CV_THRESH_BINARY_INV)
+        #"""
+        cv.NamedWindow("Shades")              
+        cv.ShowImage("Shades",shades)
+        cv.WaitKey()
+        #"""
+        im_with_shades = cv.CloneImage(image_gray)
+        cv.Threshold(image_gray, im_with_shades, 180,255, cv.CV_THRESH_BINARY_INV)
+        #"""
+        cv.NamedWindow("Image with shades")              
+        cv.ShowImage("Image with shades",im_with_shades)
+        cv.WaitKey()
+        #"""
+        cv.Sub(im_with_shades,shades,image_thresh)
+        #cv.Not(image_thresh,image_thresh)
+        #"""
+        cv.NamedWindow("Result")              
+        cv.ShowImage("Result",image_thresh)
+        cv.WaitKey()
+        cv.DestroyWindow("Shades")
+        cv.DestroyWindow("Image with shades")
+        cv.DestroyWindow("Result")
+        #"""
     elif bg_mode==YELLOW_BG:
         upper_thresh = cv.CloneImage(image_hue)
         lower_thresh = cv.CloneImage(image_hue)
