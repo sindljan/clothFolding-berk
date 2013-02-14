@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #An package that provides folding process.
-import roslib
+import roslib; roslib.load_manifest('conture_model_folding')
 import sys
 import math
 import rospy
@@ -9,12 +9,15 @@ import cv
 import os.path
 import pickle
 import numpy as np
-roslib.load_manifest("conture_model_folding")
+import tf
 from clothing_models import Models
 from shape_window.ShapeWindow import *
 from shape_window import ShapeWindowUtils
 from shape_window import Geometry2D
 from visual_feedback_utils import Vector2D, thresholding, shape_fitting
+from sensor_msgs.msg import Image
+from conture_model_folding.srv import *
+from cv_bridge import CvBridge, CvBridgeError
 
 ASYMM = 0 			# Asymmetric polygon model
 #SYMM = 1 			# Symmetric polygon model
@@ -102,7 +105,7 @@ def main(args):
     #Get initial model
     model = get_initial_model()
     #fit the model to the image
-    model = fit_model_to_image(model,unw_img)
+    #model = fit_model_to_image(model,unw_img)
     #for each desired fold
     NumOfFolds = 0
     if(TYPE == ASYMM):
@@ -123,8 +126,8 @@ def main(args):
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        model = fit_model_to_image(model,unw_img)
-
+        #model = fit_model_to_image(model,unw_img)
+   
 ## Execute fold according to the fold line
 #
 #   @param model The model of current state of an obseved object
@@ -365,15 +368,35 @@ def get_initial_model():
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
 def take_picture(index):
-    show_message("TAKE PICTURE", MsgTypes.debug)
-    path = "/media/Data/clothImages/towel/im%02d.JPG" % index
+    print "TAKE_PICTURE"
+    takenImage = None
+    #take a picture
+    rospy.wait_for_service('get_kinect_image')
     try:
-        img = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
-    except:
-        show_message("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
-        sys.exit()
-    show_message("Loading image from the file " + path, MsgTypes.info)
-    return img
+        service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
+        resp = service() #call service and return image
+        takenImage = resp.image
+    except rospy.ServiceException, e:
+        show_message("Image grabing service failed: %s."%e, MsgTypes.exception)
+        
+    #convert it to format accepted by openCV
+    try:
+        bridge = CvBridge()
+        takenImage = bridge.imgmsg_to_cv(takenImage,"bgr8")
+    except CvBridgeError, e:
+        show_message("Image conversion error: %s."%e, MsgTypes.exception)
+    
+    #visualise
+    #""" DEBUG
+    print "/**************Test****************/"
+    cv.NamedWindow("Image from Kinect")
+    cv.ShowImage("Image from Kinect",takenImage)
+    cv.WaitKey()
+    cv.DestroyWindow("Image from Kinect")
+    print "/************EndOfTest*************/"
+    #"""
+    sys.exit();
+    return takenImage
 
 ## Compute and return homography between side and top view
 #
@@ -396,10 +419,10 @@ def get_homography():
 #  @param text Text of the message
 #  @param msgType Type of message. One of the elements of MsgTypes class.
 def show_message(text,msgType):
-    return
     if(msgType == MsgTypes.info):
         print "INFO: " + text
     elif(msgType == MsgTypes.debug):
+        return
         print "DEBUG: " + text
     elif(msgType == MsgTypes.exception):
         print "ERROR: " + text
@@ -411,9 +434,9 @@ def show_message(text,msgType):
 #  @return A list of named arguments and its values
 def parse():
     import argparse
-    
     parser = argparse.ArgumentParser(description='Run folding process')                            
-    return parser.parse_args()
+    #return parser.parse_args()
+    return None
     
 
 if __name__ == '__main__':

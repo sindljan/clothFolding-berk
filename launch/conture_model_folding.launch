@@ -1,0 +1,4 @@
+<launch>
+  <node name="kinect" pkg="freenect_camera" type="freenect_node" output="screen"/>
+  <node name="contureFolding" pkg="conture_model_folding" type="FoldingProcess.py" output="screen"/>
+</launch>
