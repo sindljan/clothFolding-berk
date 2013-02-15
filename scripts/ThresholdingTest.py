@@ -107,7 +107,7 @@ def take_picture(index):
         return None
     
     #crop image
-    roi = (0,0,620,400) # x,y(from the top of the image),width,height
+    roi = (0,0,620,480) # x,y(from the top of the image),width,height
     cropped = cv.GetSubRect(image,roi)
     takenImage = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
     cv.Copy(cropped,takenImage)
