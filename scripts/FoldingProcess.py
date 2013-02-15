@@ -313,7 +313,7 @@ def create_folded_model(_model, _image, _foldLine):
 def fit_model_to_image(model,image):
     show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
     # initialization
-    background = thresholding.WHITE_BG
+    background = thresholding.GREEN_BG
     silent = True # true = silent, false = verbose
     show_graphics = True
     num_iters = 50
