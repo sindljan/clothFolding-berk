@@ -24,7 +24,7 @@ TEE_SKEL = 3 		# Tee model
 PANTS_SKEL = 4 		# Pants model
 SOCK_SKEL = 5 		# Sock model
 
-TYPE = SWEATER_SKEL 	#Adjust to change which type of model is being created
+TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
 class ModelMaker(ShapeWindow):
     

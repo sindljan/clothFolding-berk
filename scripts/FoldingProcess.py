@@ -22,11 +22,11 @@ from cv_bridge import CvBridge, CvBridgeError
 ASYMM = 0 			# Asymmetric polygon model
 #SYMM = 1 			# Symmetric polygon model
 #SWEATER_SKEL = 2 	# Sweater model
-#TEE_SKEL = 3 		# Tee model
+TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
-TYPE = ASYMM 	#Adjust to change which type of model is being created
+TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
 ## Begin of support classes --------------------------------------------
 
@@ -104,11 +104,13 @@ def main(args):
     #Get initial model
     model = get_initial_model()
     #fit the model to the image
-    model = fit_model_to_image(model,unw_img)
+    #model = fit_model_to_image(model,unw_img)
     #for each desired fold
     NumOfFolds = 0
     if(TYPE == ASYMM):
         NumOfFolds = 2
+    elif(TYPE == TEE_SKEL):
+        NumOfFolds = 3
     for i in range(1,NumOfFolds+1):
         show_message("Do fold num: %02.d from %02.d" %(i,NumOfFolds), MsgTypes.info)
         #create a fold
@@ -125,7 +127,7 @@ def main(args):
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        model = fit_model_to_image(model,unw_img)
+        #model = fit_model_to_image(model,unw_img)
 
 ## Remove perspective distortion from image. 
 #
@@ -284,6 +286,37 @@ def get_fold_line(model,i):
             
             foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL
+            
+    elif(TYPE == TEE_SKEL):
+        if(i == 1):
+            pt = model.bottom_left() 
+            bl = Geometry2D.Point(int(pt[0]), int(pt[1])+10) 
+            pt = model.left_shoulder_top()
+            ls = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            pt = model.left_collar()
+            lc = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            foldEnd = Geometry2D.LineSegment(ls,lc).center().toTuple() #NOT OPTIMAL
+            foldStart = (foldEnd[0],int(bl.y())) #NOT OPTIMAL
+        if(i == 2):
+            pt = model.initial_model.bottom_right() 
+            br = Geometry2D.Point(int(pt[0]), int(pt[1])+10) 
+            pt = model.initial_model.right_shoulder_top()
+            rs = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            pt = model.initial_model.right_collar()
+            rc = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            foldStart = Geometry2D.LineSegment(rs,rc).center().toTuple() #NOT OPTIMAL
+            foldEnd = (foldStart[0],int(br.y())) #NOT OPTIMAL
+        if(i == 3):
+            pt = model.initial_model.initial_model.left_shoulder_top()
+            ls = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            pt = model.initial_model.initial_model.bottom_left()
+            bl = Geometry2D.Point(int(pt[0]), int(pt[1])+10)
+            pt = model.initial_model.initial_model.right_shoulder_top()
+            rs = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
+            pt = model.initial_model.initial_model.bottom_right()
+            br = Geometry2D.Point(int(pt[0]), int(pt[1])+10)
+            foldStart = Geometry2D.LineSegment(br,rs).center().toTuple() #NOT OPTIMAL
+            foldEnd = Geometry2D.LineSegment(bl,ls).center().toTuple() #NOT OPTIMAL
     else:
         show_message("Not implemented type of cloth",MsgTypes.exception)
         sys.exit()
@@ -308,7 +341,7 @@ def create_folded_model(_model, _image, _foldLine):
     if(modelWithFold == None):
         sys.exit()
         
-    """ 
+    #""" 
     print "/**************Test****************/"
     cv.NamedWindow("Debug window")
     img = cv.CloneImage(_image)
@@ -377,14 +410,23 @@ def fit_model_to_image(model,image):
     fitted_model.set_image(None)
     show_message("Model verticies after fitting: " + str(fitted_model.polygon_vertices_int()), MsgTypes.info);
     
+    show_message("FIT MODEL TO IMAGE - DONE", MsgTypes.debug)
     return fitted_model
         
 ##  Load an initial model from HDD
 #
 #   @return Model of observed object
 def get_initial_model():
+    initialModel = None
+    modelPath = ""
     #unpicle model from file
-    modelPath = "/media/Data/models/im_towel.pickle"
+    if(TYPE == ASYMM):
+        modelPath = "/media/Data/models/im_towel.pickle"
+    elif(TYPE == TEE_SKEL):
+        modelPath = "/media/Data/models/im_tShirt.pickle"
+    else:
+        show_message("Unknown model type.",MsgTypes.exception)
+        sys.exit()
     initialModel = pickle.load(open(modelPath))
     return initialModel
     
@@ -434,7 +476,7 @@ def take_picture(index):
     #"""
     
     #visualise
-    #""" DEBUG
+    """ DEBUG
     cv.NamedWindow("Image from Kinect")
     cv.ShowImage("Image from Kinect",takenImage)
     cv.WaitKey()
