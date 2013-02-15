@@ -375,7 +375,7 @@ def take_picture(index):
     print "TAKE_PICTURE"
     takenImage = None
     
-    """
+    #"""
     #take a picture from Kinect
     rospy.wait_for_service('get_kinect_image')
     try:
@@ -395,32 +395,28 @@ def take_picture(index):
         return None
     
     #crop image
-    roi = (80,80,480,400)
+    roi = (0,0,620,400) # x,y(from the top of the image),width,height
     cropped = cv.GetSubRect(image,roi)
     takenImage = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
     cv.Copy(cropped,takenImage)
     #cv.SaveImage("./im.png",takenImage)
     #"""
     
-    #""" take a picture from file
-    show_message("TAKE PICTURE", MsgTypes.debug)
-    path = "/media/Data/clothImages/towel/imA%02d.JPG" % index
+    """ take a picture from file
+    path = "/media/Data/clothImages/towel/imA%02d.png" % index
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
-       show_message("File not found or cannot be loaded. Path = " + path, MsgTypes.exception)
+       print "File not found or cannot be loaded. Path = " + path
        sys.exit()
-    show_message("Loading image from the file " + path, MsgTypes.info)
     #"""
     
     #visualise
     #""" DEBUG
-    print "/**************Test****************/"
     cv.NamedWindow("Image from Kinect")
     cv.ShowImage("Image from Kinect",takenImage)
     cv.WaitKey()
-    cv.DestroyWindow("Image from Kinect")
-    print "/************EndOfTest*************/"
+    #cv.DestroyWindow("Image from Kinect")
     #"""
     
     return takenImage
@@ -432,20 +428,14 @@ def take_picture(index):
 #  @return 3x3 homography matrix
 def get_homography():
     # set up source points (model points)
-    srcPoints = cv.fromarray(np.matrix([[203,374],[432,376],[431,137],[201,139]], dtype=float))
+    srcPoints = cv.fromarray(np.matrix([[63, 343],[537, 367],[550, 137],[78, 123]], dtype=float))
     # set up destination points (observed object points)
     #dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
-    dstPoints = cv.fromarray(np.matrix([
-        [173, 303],
-        [289, 302],
-        [284, 239],
-        [184, 235]
-        ], dtype=float))
+    dstPoints = cv.fromarray(np.matrix([[22, 383],[608, 385],[541, 187],[100, 196]], dtype=float))
     # compute homography
     H = cv.CreateMat(3,3,cv.CV_32FC1)
     cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
-    show_message("Computed homography" + str(np.asarray(H)), MsgTypes.info)
-    return H
+    return H 
     
 ## Show a message according to the setup verbosity and append a proper label
 #
