@@ -24,8 +24,7 @@ def main():
     #compute a homography
     H = get_homography()
     #unwarped the image. Turn the image into the top view.
-    unw_img = cv.CreateImage((640,480),cv.IPL_DEPTH_8U,3)
-    cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
+    unw_img = unwrap_image(img,H)
     # initialization
     background = thresholding.GREEN_BG
     #Use the thresholding module to get the contour out
@@ -38,6 +37,29 @@ def main():
     cv.WaitKey()
     cv.DestroyWindow("Debug window")
     #"""
+    
+## Remove perspective distortion from image. 
+#
+#   In fact this function creates a top view from side view.
+#   @param image An input image with perspective distortion
+#   @param transformation The transformation that converts side view to top view
+#   @return Return top view image.
+def unwrap_image(image, transformation):
+    H = transformation
+    # calculate transformation between image centers
+    src_center = [cv.GetSize(image)[0]/2,cv.GetSize(image)[1]/2]
+    z = 1./(H[2,0]*src_center[0]+H[2,1]*src_center[1]+H[2,2])
+    dstX = (H[0,0]*src_center[0]+H[0,1]*src_center[1]+H[0,2])*z
+    dstY = (H[1,0]*src_center[0]+H[1,1]*src_center[1]+H[1,2])*z
+    
+    # now when we know corespondence between centres we can update transformation
+    H[0,2] += src_center[0] - dstX
+    H[1,2] += src_center[1] - dstY
+    
+    # do the transformation
+    unw_img = cv.CreateImage((640,480),cv.IPL_DEPTH_8U,3)
+    cv.WarpPerspective(image,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (0,0,0,0)) # pixels that are out of the image are set to black
+    return unw_img
     
 ## Compute and return homography between side and top view
 #
