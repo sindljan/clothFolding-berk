@@ -305,6 +305,10 @@ def get_fold_line(model,i):
             lc = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
             foldEnd = Geometry2D.LineSegment(ls,lc).center().toTuple() #NOT OPTIMAL
             foldStart = (foldEnd[0],int(bl.y())) #NOT OPTIMAL
+            
+            ls = model.left_shoulder_top()
+            ls = Vector2D.make_pt(int(pt[0]), int(pt[1])
+            
         if(i == 2):
             pt = model.bottom_right() 
             br = Geometry2D.Point(int(pt[0]), int(pt[1])+10) 
