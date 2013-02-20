@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-#An package that provides folding process.
-import roslib; roslib.load_manifest('conture_model_folding')
+#An package that provides contour folding process.
+import roslib; roslib.load_manifest('contour_model_folding')
 import sys
 import math
 import rospy
@@ -22,7 +22,7 @@ from cv_bridge import CvBridge, CvBridgeError
 ASYMM = 0 			# Asymmetric polygon model
 #SYMM = 1 			# Symmetric polygon model
 #SWEATER_SKEL = 2 	# Sweater model
-#TEE_SKEL = 3 		# Tee model
+TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
@@ -99,20 +99,19 @@ def main(args):
     img = take_picture(imgStartIndex)
     #compute a homography
     H = get_homography()
-    #unwarped the image. Turn the image into the top view.
+    #unwarped the image. Turn the image into a top view.
     unw_img = unwrap_image(img,H)
     #Get initial model
     model = get_initial_model()
+    initFittedModel = model
     #fit the model to the image
-    model = fit_model_to_image(model,unw_img)
+    (initFittedModel,model) = fit_model_to_image(model,unw_img,0) #initFittedModel is original model after first iteration of fitting without folds. It means it is good for fold line definition.
     #for each desired fold
-    NumOfFolds = 0
-    if(TYPE == ASYMM):
-        NumOfFolds = 2
+    NumOfFolds = get_number_of_folds()
     for i in range(1,NumOfFolds+1):
         show_message("Do fold num: %02.d from %02.d" %(i,NumOfFolds), MsgTypes.info)
         #create a fold
-        L = get_fold_line(model,i);
+        L = get_fold_line(initFittedModel,i);
         #create a new model with fold
         foldedModel = create_folded_model(model,unw_img,L)
         #excute a fold
@@ -122,10 +121,20 @@ def main(args):
         #take an image
         img = take_picture(imgStartIndex + i)
         #unwarp image
-        unw_img = cv.CloneImage(img)
-        cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
+        unw_img = unwrap_image(img,H)
         #fit the new model to the image
-        model = fit_model_to_image(model,unw_img)
+        (_,model) = fit_model_to_image(model,unw_img,i)
+
+## Return number of fold acording to the chosen model.
+#
+#   @return Number of folds.
+def get_number_of_folds():
+    NumOfFolds = 0
+    if(TYPE == ASYMM):
+        NumOfFolds = 2
+    elif(TYPE == TEE_SKEL):
+        NumOfFolds = 3
+    return NumOfFolds
 
 ## Remove perspective distortion from image. 
 #
@@ -220,7 +229,7 @@ def get_grasp_points(model,foldedModel,foldLine):
         for pt in gps:
             #dist = Geometry2D.ptLineDistance(tuple_to_point(pt),tuples_to_line(foldLine))
             dist = point_line_distance(pt,foldLine)
-            show_message( "Distant between point and line = " + str(dist) + " line = " + str(foldLine) + " point = " + str(pt), MsgTypes.debug)
+            show_message( "Distant between point and fold line = " + str(dist) + " line = " + str(foldLine) + " point = " + str(pt), MsgTypes.debug)
             if(dist > fmd):
                 fmd = dist
                 fmdp = pt
@@ -241,6 +250,7 @@ def point_line_distance(pt,foldLine):
     dist = abs((pt2[0]-pt1[0])*(pt1[1]-pt[1])-(pt1[0]-pt[0])*(pt2[1]-pt1[1]))/math.sqrt(pow((pt2[0]-pt1[0]),2)+pow((pt2[1]-pt1[1]),2))
     return dist
 
+"""
 def tuples_to_line(pts):
     pt1 = pts[0]
     pt2 = pts[1]
@@ -248,6 +258,7 @@ def tuples_to_line(pts):
     
 def tuple_to_point(pt):
     return Geometry2D.Point(pt[0],pt[1])
+"""
    
 ## Creates fold according to the model current state and order of fold
 #
@@ -264,26 +275,73 @@ def get_fold_line(model,i):
         if(i == 1):
             #Fold in half
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
-            [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
-            # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-10)
-            br.translate(0,-10)
-            tl.translate(0,10)
-            tr.translate(0,10)
+            [bl,tl,tr,br] = [pt for pt in model.polygon_vertices_int()][0:4]
+            foldStart = Vector2D.pt_center(bl,br)
+            foldEnd = Vector2D.pt_center(tl,tr)
+            # make foldline little bit bigger than conture
+            foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
+            foldStart = Vector2D.scale_pt(foldStart,1.3,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,1.3,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
+            foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
             
-            foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
-            foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
         elif(i == 2):
             #Fold in half again
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
-            [tr,tl,bl,br] = ([Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()])[0:4]
-            bl.translate(-10,0)
-            br.translate(10,0)
-            tl.translate(-10,0)
-            tr.translate(10,0)
+            [bl,tl,tr,br] = ([pt for pt in model.polygon_vertices_int()])[0:4]
+            foldStart = Vector2D.pt_center(br,tr)
+            foldEnd = Vector2D.pt_center(bl,tl)
+            # make foldline little bit bigger than conture
+            foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
+            foldStart = Vector2D.scale_pt(foldStart,1.2,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,1.2,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
+            foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
             
-            foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
-            foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL
+    elif(TYPE == TEE_SKEL):
+        if(i == 1):         
+            ls = model.left_shoulder_top()
+            lc = model.left_collar()
+            lslc = Vector2D.pt_center(ls,lc) # point between ls and lc
+            bl = model.bottom_left()
+            sbl = Vector2D.translate_pt(bl,Vector2D.pt_diff(lslc,ls)) # shifted bl by vector (ls,lslc)
+            foldLineCenter = Vector2D.pt_center(lslc,sbl)
+            # make foldline little bit bigger than conture
+            lslc = Vector2D.scale_pt(lslc,1.3,foldLineCenter)
+            sbl = Vector2D.scale_pt(sbl,1.4,foldLineCenter)
+            # transfer points to corect data type
+            foldEnd = (int(Vector2D.pt_x(lslc)),int(Vector2D.pt_y(lslc)))
+            foldStart = (int(Vector2D.pt_x(sbl)),int(Vector2D.pt_y(sbl)))
+        if(i == 2):           
+            rs = model.right_shoulder_top()
+            rc = model.right_collar()
+            rsrc = Vector2D.pt_center(rs,rc) # point between rs and rc
+            br = model.bottom_right()
+            sbr = Vector2D.translate_pt(br,Vector2D.pt_diff(rsrc,rs)) # shifted br by vector (rs,rsrc)
+            foldLineCenter = Vector2D.pt_center(rsrc,sbr)
+            # make foldline little bit bigger than conture
+            rsrc = Vector2D.scale_pt(rsrc,1.3,foldLineCenter)
+            sbr = Vector2D.scale_pt(sbr,1.4,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(rsrc)),int(Vector2D.pt_y(rsrc)))
+            foldEnd = (int(Vector2D.pt_x(sbr)),int(Vector2D.pt_y(sbr)))
+        if(i == 3):          
+            ls = model.left_shoulder_top()
+            rs = model.right_shoulder_top()
+            bl = model.bottom_left()
+            br = model.bottom_right()
+            foldStart = Vector2D.pt_center(br,rs)
+            foldEnd = Vector2D.pt_center(bl,ls)
+            foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
+            # make foldline little bit bigger than conture
+            foldStart = Vector2D.scale_pt(foldStart,0.9,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,0.9,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
+            foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
+            
     else:
         show_message("Not implemented type of cloth",MsgTypes.exception)
         sys.exit()
@@ -308,14 +366,14 @@ def create_folded_model(_model, _image, _foldLine):
     if(modelWithFold == None):
         sys.exit()
         
-    """ 
+    #""" 
     print "/**************Test****************/"
-    cv.NamedWindow("Debug window")
+    cv.NamedWindow("Folded model")
     img = cv.CloneImage(_image)
     cv.PolyLine(img,[modelWithFold.polygon_vertices_int()],1,cv.CV_RGB(255,0,0),1)               
-    cv.ShowImage("Debug window",img)
+    cv.ShowImage("Folded model",img)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    cv.DestroyWindow("Folded model")
     print "/************EndOfTest*************/"
     #"""
     
@@ -332,31 +390,36 @@ def create_folded_model(_model, _image, _foldLine):
 #   @param model The model that has to be fitted.
 #   @param image the image that has to be fitted.
 #   @return Fitted model
-def fit_model_to_image(model,image):
+def fit_model_to_image(model,image,iteration):
     show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
     # initialization
     background = thresholding.GREEN_BG
-    silent = True # true = silent, false = verbose
+    silent = False # true = silent, false = verbose
     show_graphics = True
     num_iters = 50
     
     #Properly set phases
     orient_opt      = True
     symm_opt        = True
-    asymm_opt       = True
-    fine_tuning_opt = True
+    asymm_opt      = True
+    fine_tuning_opt= True
+    """
+    if(iteration == 0): # different optimalization parameters first fitting
+        asymm_opt       = False
+        fine_tuning_opt = False        
+    """
     
     #Create an image to output
     image_out = cv.CloneImage(image)
     #Use the thresholding module to get the contour out
     shape_contour = thresholding.get_contour(image,bg_mode=background,filter_pr2=False,crop_rect=None)
-    #"""
-    cv.NamedWindow("Debug window")
+    #""" Show object contur
+    cv.NamedWindow("Shape contocur of the observed object")
     img = cv.CloneImage(image)
     cv.PolyLine(img,[shape_contour],1,cv.CV_RGB(0,0,255),1)               
-    cv.ShowImage("Debug window",img)
+    cv.ShowImage("Shape contour of the observed object",img)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    cv.DestroyWindow("Shape contour of the observed object")
     #"""
     
     #Use the shaper fitter module to fit the model to image
@@ -364,27 +427,55 @@ def fit_model_to_image(model,image):
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
                                             num_iters=num_iters )
+    #if(iteration > 2):                                                    
     (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+    
     """
     print "/**************Test****************/"
-    cv.NamedWindow("Debug window")
-    cv.PolyLine(image,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
-    cv.ShowImage("Debug window",image)
+    im1 = cv.CloneImage(image)
+    cv.NamedWindow("Fitted model")
+    cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    cv.ShowImage("Fitted model",im1)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    
+    im2 = cv.CloneImage(image)
+    cv.NamedWindow("Final model")
+    cv.PolyLine(im2,[final_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    cv.ShowImage("Final model",im2)
+    
+    cv.WaitKey()
+    cv.DestroyWindow("Fitted model")
+    cv.DestroyWindow("Final model")
     print "/************EndOfTest*************/"
     #"""
-    fitted_model.set_image(None)
-    show_message("Model verticies after fitting: " + str(fitted_model.polygon_vertices_int()), MsgTypes.info);
+
+    """ save fitted model to the file
+    modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+    pickle.dump(final_model, open(modelPath,'w'))
+    #"""
+    """ load fitted model from the file
+    modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+    final_model = pickle.load(open(modelPath))
+    #"""
     
-    return fitted_model
+    final_model.set_image(None)
+    show_message("FIT MODEL TO IMAGE - DONE", MsgTypes.debug)
+    return (final_model,final_model)
         
 ##  Load an initial model from HDD
 #
 #   @return Model of observed object
 def get_initial_model():
+    initialModel = None
+    modelPath = ""
     #unpicle model from file
-    modelPath = "/media/Data/models/im_towel.pickle"
+    if(TYPE == ASYMM):
+        modelPath = "/media/Data/models/im_towel.pickle"
+    elif(TYPE == TEE_SKEL):
+        modelPath = "/media/Data/models/im_tShirt.pickle"
+    else:
+        show_message("Unknown model type.",MsgTypes.exception)
+        sys.exit()
     initialModel = pickle.load(open(modelPath))
     return initialModel
     
@@ -397,8 +488,7 @@ def take_picture(index):
     print "TAKE_PICTURE"
     takenImage = None
     
-    #"""
-    #take a picture from Kinect
+    """ take a picture from Kinect
     rospy.wait_for_service('get_kinect_image')
     try:
         service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
@@ -424,8 +514,9 @@ def take_picture(index):
     #cv.SaveImage("./im.png",takenImage)
     #"""
     
-    """ take a picture from file
-    path = "/media/Data/clothImages/towel/imA%02d.png" % index
+    #""" take a picture from file
+    #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+    path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
@@ -433,8 +524,7 @@ def take_picture(index):
        sys.exit()
     #"""
     
-    #visualise
-    #""" DEBUG
+    """ Show image from Kinect
     cv.NamedWindow("Image from Kinect")
     cv.ShowImage("Image from Kinect",takenImage)
     cv.WaitKey()

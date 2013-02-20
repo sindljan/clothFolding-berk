@@ -1,13 +1,13 @@
 <package>
-  <description brief="conture_model_folding">
+  <description brief="contour_model_folding">
 
-    conture_model_folding
+    contour_model_folding
 
   </description>
   <author>Jan Sindler</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/conture_model_folding</url>
+  <url>http://ros.org/wiki/contour_model_folding</url>
   <depend package="clothing_models"/>
   <depend package="visual_feedback_utils"/>
   <depend package="shape_window"/>
