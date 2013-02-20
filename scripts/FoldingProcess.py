@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #An package that provides contour folding process.
-import roslib; roslib.load_manifest('conture_model_folding')
+import roslib; roslib.load_manifest('contour_model_folding')
 import sys
 import math
 import rospy
@@ -26,7 +26,7 @@ TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
-TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
+TYPE = ASYMM 	#Adjust to change which type of model is being created
 
 ## Begin of support classes --------------------------------------------
 
@@ -275,26 +275,30 @@ def get_fold_line(model,i):
         if(i == 1):
             #Fold in half
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info)
-            [bl,tl,tr,br] = [Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()]
-            # shift in x direction otherwise a model with fold would be illegal
-            bl.translate(0,-10)
-            br.translate(0,-10)
-            tl.translate(0,10)
-            tr.translate(0,10)
+            [bl,tl,tr,br] = [pt for pt in model.polygon_vertices_int()][0:4]
+            foldStart = Vector2D.pt_center(bl,br)
+            foldEnd = Vector2D.pt_center(tl,tr)
+            # make foldline little bit bigger than conture
+            foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
+            foldStart = Vector2D.scale_pt(foldStart,1.3,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,1.3,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
+            foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
             
-            foldStart = Geometry2D.LineSegment(bl,br).center().toTuple() #NOT OPTIMAL
-            foldEnd = Geometry2D.LineSegment(tl,tr).center().toTuple() #NOT OPTIMAL
         elif(i == 2):
             #Fold in half again
             show_message("Model verticies " + str(model.polygon_vertices_int()), MsgTypes.info);
-            [tr,tl,bl,br] = ([Geometry2D.Point(int(pt[0]), int(pt[1])) for pt in model.polygon_vertices_int()])[0:4]
-            bl.translate(-10,0)
-            br.translate(10,0)
-            tl.translate(-10,0)
-            tr.translate(10,0)
-            
-            foldStart = Geometry2D.LineSegment(br,tr).center().toTuple() #NOT OPTIMAL
-            foldEnd = Geometry2D.LineSegment(bl,tl).center().toTuple() #NOT OPTIMAL
+            [bl,tl,tr,br] = ([pt for pt in model.polygon_vertices_int()])[0:4]
+            foldStart = Vector2D.pt_center(br,tr)
+            foldEnd = Vector2D.pt_center(bl,tl)
+            # make foldline little bit bigger than conture
+            foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
+            foldStart = Vector2D.scale_pt(foldStart,1.2,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,1.2,foldLineCenter)
+            # transfer points to corect data type
+            foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
+            foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
             
     elif(TYPE == TEE_SKEL):
         if(i == 1):         
@@ -305,8 +309,8 @@ def get_fold_line(model,i):
             sbl = Vector2D.translate_pt(bl,Vector2D.pt_diff(lslc,ls)) # shifted bl by vector (ls,lslc)
             foldLineCenter = Vector2D.pt_center(lslc,sbl)
             # make foldline little bit bigger than conture
-            lslc = Vector2D.scale_pt(lslc,1.2,foldLineCenter)
-            sbl = Vector2D.scale_pt(sbl,1.3,foldLineCenter)
+            lslc = Vector2D.scale_pt(lslc,1.3,foldLineCenter)
+            sbl = Vector2D.scale_pt(sbl,1.4,foldLineCenter)
             # transfer points to corect data type
             foldEnd = (int(Vector2D.pt_x(lslc)),int(Vector2D.pt_y(lslc)))
             foldStart = (int(Vector2D.pt_x(sbl)),int(Vector2D.pt_y(sbl)))
@@ -318,8 +322,8 @@ def get_fold_line(model,i):
             sbr = Vector2D.translate_pt(br,Vector2D.pt_diff(rsrc,rs)) # shifted br by vector (rs,rsrc)
             foldLineCenter = Vector2D.pt_center(rsrc,sbr)
             # make foldline little bit bigger than conture
-            rsrc = Vector2D.scale_pt(rsrc,1.2,foldLineCenter)
-            sbr = Vector2D.scale_pt(sbr,1.3,foldLineCenter)
+            rsrc = Vector2D.scale_pt(rsrc,1.3,foldLineCenter)
+            sbr = Vector2D.scale_pt(sbr,1.4,foldLineCenter)
             # transfer points to corect data type
             foldStart = (int(Vector2D.pt_x(rsrc)),int(Vector2D.pt_y(rsrc)))
             foldEnd = (int(Vector2D.pt_x(sbr)),int(Vector2D.pt_y(sbr)))
@@ -332,8 +336,8 @@ def get_fold_line(model,i):
             foldEnd = Vector2D.pt_center(bl,ls)
             foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
             # make foldline little bit bigger than conture
-            foldStart = Vector2D.scale_pt(foldStart,0.8,foldLineCenter)
-            foldEnd = Vector2D.scale_pt(foldEnd,0.8,foldLineCenter)
+            foldStart = Vector2D.scale_pt(foldStart,0.9,foldLineCenter)
+            foldEnd = Vector2D.scale_pt(foldEnd,0.9,foldLineCenter)
             # transfer points to corect data type
             foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
             foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
@@ -399,9 +403,11 @@ def fit_model_to_image(model,image,iteration):
     symm_opt        = True
     asymm_opt      = True
     fine_tuning_opt= True
+    """
     if(iteration == 0): # different optimalization parameters first fitting
         asymm_opt       = False
         fine_tuning_opt = False        
+    """
     
     #Create an image to output
     image_out = cv.CloneImage(image)
@@ -421,8 +427,8 @@ def fit_model_to_image(model,image,iteration):
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
                                             num_iters=num_iters )
-    if(iteration > 2):                                                    
-        (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+    #if(iteration > 2):                                                    
+    (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
     
     """
     print "/**************Test****************/"
@@ -447,7 +453,7 @@ def fit_model_to_image(model,image,iteration):
     modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
     pickle.dump(final_model, open(modelPath,'w'))
     #"""
-    #""" load fitted model from the file
+    """ load fitted model from the file
     modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
     final_model = pickle.load(open(modelPath))
     #"""
@@ -509,7 +515,8 @@ def take_picture(index):
     #"""
     
     #""" take a picture from file
-    path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+    #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+    path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
