@@ -576,18 +576,18 @@ class Point_Model_Folded(Point_Model):
         return 1.0
         
     def translate(self,trans, update_initial_model=False):
-        if(update_initial_model):
-            self.initial_model.translate(trans)
+        #if(update_initial_model):
+        #    self.initial_model.translate(trans)
         Point_Model.translate(self,trans)
         
     def rotate(self,angle,origin=None, update_initial_model=False):
-        if(update_initial_model):
-            self.initial_model.rotate(angle,origin)
+        #if(update_initial_model):
+        #    self.initial_model.rotate(angle,origin)
         Point_Model.rotate(self,angle,origin)
         
     def scale(self,amt,origin=None, update_initial_model=False):
-        if(update_initial_model):
-            self.initial_model.scale(amt,origin)
+        #if(update_initial_model):
+        #    self.initial_model.scale(amt,origin)
         Point_Model.scale(self,amt,origin)
         
     def from_params(self,params):
@@ -919,9 +919,7 @@ class Model_Shirt_Generic(Point_Model_Variable_Symm):
     def polygon_vertices(self):
         return [self.bottom_left(),self.left_armpit(),self.left_sleeve_bottom(),self.left_sleeve_top(),self.left_shoulder_top(),self.left_collar(),self.spine_top()
                ,self.right_collar(),self.right_shoulder_top(),self.right_sleeve_top(),self.right_sleeve_bottom(),self.right_armpit(),self.bottom_right()]
-               
         
-    
     #def right_collar(self):
     #    return mirror_pt(self.left_collar(),self.axis_of_symmetry())
         
