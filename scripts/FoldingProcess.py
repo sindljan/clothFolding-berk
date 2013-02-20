@@ -99,22 +99,19 @@ def main(args):
     img = take_picture(imgStartIndex)
     #compute a homography
     H = get_homography()
-    #unwarped the image. Turn the image into the top view.
+    #unwarped the image. Turn the image into a top view.
     unw_img = unwrap_image(img,H)
     #Get initial model
     model = get_initial_model()
+    initFittedModel = model
     #fit the model to the image
-    #model = fit_model_to_image(model,unw_img)
+    #(initFittedModel,model) = fit_model_to_image(model,unw_img) #initFittedModel is original model after first iteration of fitting without folds. It means it is good for fold line definition.
     #for each desired fold
-    NumOfFolds = 0
-    if(TYPE == ASYMM):
-        NumOfFolds = 2
-    elif(TYPE == TEE_SKEL):
-        NumOfFolds = 3
+    NumOfFolds = get_number_of_folds()
     for i in range(1,NumOfFolds+1):
         show_message("Do fold num: %02.d from %02.d" %(i,NumOfFolds), MsgTypes.info)
         #create a fold
-        L = get_fold_line(model,i);
+        L = get_fold_line(initFittedModel,i);
         #create a new model with fold
         foldedModel = create_folded_model(model,unw_img,L)
         #excute a fold
@@ -127,7 +124,18 @@ def main(args):
         unw_img = cv.CloneImage(img)
         cv.WarpPerspective(img,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (255,255,255,255)) # pixels that are out of the image are set to white
         #fit the new model to the image
-        #model = fit_model_to_image(model,unw_img)
+        #(_,model) = fit_model_to_image(model,unw_img)
+
+## Return number of fold acording to the chosen model.
+#
+#   @return Number of folds.
+def get_number_of_folds():
+    NumOfFolds = 0
+    if(TYPE == ASYMM):
+        NumOfFolds = 2
+    elif(TYPE == TEE_SKEL):
+        NumOfFolds = 3
+    return NumOfFolds
 
 ## Remove perspective distortion from image. 
 #
@@ -298,22 +306,23 @@ def get_fold_line(model,i):
             foldEnd = Geometry2D.LineSegment(ls,lc).center().toTuple() #NOT OPTIMAL
             foldStart = (foldEnd[0],int(bl.y())) #NOT OPTIMAL
         if(i == 2):
-            pt = model.initial_model.bottom_right() 
+            pt = model.bottom_right() 
             br = Geometry2D.Point(int(pt[0]), int(pt[1])+10) 
-            pt = model.initial_model.right_shoulder_top()
+            pt = model.right_shoulder_top()
             rs = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
-            pt = model.initial_model.right_collar()
+            pt = model.right_collar()
             rc = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
             foldStart = Geometry2D.LineSegment(rs,rc).center().toTuple() #NOT OPTIMAL
             foldEnd = (foldStart[0],int(br.y())) #NOT OPTIMAL
         if(i == 3):
-            pt = model.initial_model.initial_model.left_shoulder_top()
+            actMod = model
+            pt = model.left_shoulder_top()
             ls = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
-            pt = model.initial_model.initial_model.bottom_left()
+            pt = model.bottom_left()
             bl = Geometry2D.Point(int(pt[0]), int(pt[1])+10)
-            pt = model.initial_model.initial_model.right_shoulder_top()
+            pt = model.right_shoulder_top()
             rs = Geometry2D.Point(int(pt[0]), int(pt[1])-10)
-            pt = model.initial_model.initial_model.bottom_right()
+            pt = model.bottom_right()
             br = Geometry2D.Point(int(pt[0]), int(pt[1])+10)
             foldStart = Geometry2D.LineSegment(br,rs).center().toTuple() #NOT OPTIMAL
             foldEnd = Geometry2D.LineSegment(bl,ls).center().toTuple() #NOT OPTIMAL
@@ -341,14 +350,14 @@ def create_folded_model(_model, _image, _foldLine):
     if(modelWithFold == None):
         sys.exit()
         
-    #""" 
+    """ 
     print "/**************Test****************/"
-    cv.NamedWindow("Debug window")
+    cv.NamedWindow("Folded model")
     img = cv.CloneImage(_image)
     cv.PolyLine(img,[modelWithFold.polygon_vertices_int()],1,cv.CV_RGB(255,0,0),1)               
-    cv.ShowImage("Debug window",img)
+    cv.ShowImage("Folded model",img)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    cv.DestroyWindow("Folded model")
     print "/************EndOfTest*************/"
     #"""
     
@@ -369,7 +378,7 @@ def fit_model_to_image(model,image):
     show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
     # initialization
     background = thresholding.GREEN_BG
-    silent = True # true = silent, false = verbose
+    silent = False # true = silent, false = verbose
     show_graphics = True
     num_iters = 50
     
@@ -384,12 +393,12 @@ def fit_model_to_image(model,image):
     #Use the thresholding module to get the contour out
     shape_contour = thresholding.get_contour(image,bg_mode=background,filter_pr2=False,crop_rect=None)
     #"""
-    cv.NamedWindow("Debug window")
+    cv.NamedWindow("Shape contour of the observed object")
     img = cv.CloneImage(image)
     cv.PolyLine(img,[shape_contour],1,cv.CV_RGB(0,0,255),1)               
-    cv.ShowImage("Debug window",img)
+    cv.ShowImage("Shape contour of the observed object",img)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    cv.DestroyWindow("Shape contour of the observed object")
     #"""
     
     #Use the shaper fitter module to fit the model to image
@@ -398,20 +407,29 @@ def fit_model_to_image(model,image):
                                             SILENT=silent,          SHOW=show_graphics,
                                             num_iters=num_iters )
     (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
-    """
+    #"""
     print "/**************Test****************/"
-    cv.NamedWindow("Debug window")
-    cv.PolyLine(image,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
-    cv.ShowImage("Debug window",image)
+    im1 = cv.CloneImage(image)
+    cv.NamedWindow("Fitted model")
+    cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    cv.ShowImage("Fitted model",image)
     cv.WaitKey()
-    cv.DestroyWindow("Debug window")
+    
+    im2 = cv.CloneImage(image)
+    cv.NamedWindow("Final model")
+    cv.PolyLine(im2,[final_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    cv.ShowImage("Final model",image)
+    
+    cv.WaitKey()
+    cv.DestroyWindow("Fitted model")
+    cv.DestroyWindow("Final model")
     print "/************EndOfTest*************/"
     #"""
     fitted_model.set_image(None)
     show_message("Model verticies after fitting: " + str(fitted_model.polygon_vertices_int()), MsgTypes.info);
     
     show_message("FIT MODEL TO IMAGE - DONE", MsgTypes.debug)
-    return fitted_model
+    return (final_model,fitted_model)
         
 ##  Load an initial model from HDD
 #
