@@ -124,21 +124,21 @@ class ShapeFitter:
             B = [ (int(pt[0]),int(pt[1])) for pt in model_rot]
             C = [ (int(pt[0]),int(pt[1])) for pt in model_scaled]
             cv.NamedWindow("Debug window")
-            img = cv.CloneImage(img_annotated)
-            model.draw_contour(img,cv.CV_RGB(100,100,100),2)
-            cv.DrawContours(img,shape_contour,cv.CV_RGB(255,0,0),cv.CV_RGB(255,0,0),0,1,8,(0,0))
-            draw_pt(img,real_top,cv.CV_RGB(255,0,0))
-            draw_pt(img,real_center,cv.CV_RGB(255,0,0))
-            draw_pt(img,model_top,cv.CV_RGB(100,100,100))
-            draw_pt(img,model_center,cv.CV_RGB(100,100,100))
-            cv.PolyLine(img,[A],1,cv.CV_RGB(255,0,0),1)   
-            cv.ShowImage("Debug window",img)
+            im = cv.CloneImage(img_annotated)
+            model.draw_contour(im,cv.CV_RGB(100,100,100),2)
+            cv.DrawContours(im,shape_contour,cv.CV_RGB(255,0,0),cv.CV_RGB(255,0,0),0,1,8,(0,0))
+            draw_pt(im,real_top,cv.CV_RGB(255,0,0))
+            draw_pt(im,real_center,cv.CV_RGB(255,0,0))
+            draw_pt(im,model_top,cv.CV_RGB(100,100,100))
+            draw_pt(im,model_center,cv.CV_RGB(100,100,100))
+            cv.PolyLine(im,[A],1,cv.CV_RGB(255,0,0),1)   
+            cv.ShowImage("Debug window",im)
             cv.WaitKey()            
-            cv.PolyLine(img,[B],1,cv.CV_RGB(0,255,0),1)  
-            cv.ShowImage("Debug window",img)
+            cv.PolyLine(im,[B],1,cv.CV_RGB(0,255,0),1)  
+            cv.ShowImage("Debug window",im)
             cv.WaitKey()             
-            cv.PolyLine(img,[C],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Debug window",img)
+            cv.PolyLine(im,[C],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Debug window",im)
             cv.WaitKey()
             cv.DestroyWindow("Debug window")
             print "/************EndOfTest*************/"
@@ -148,16 +148,16 @@ class ShapeFitter:
             #(model_center,model_top,model_theta,model_scale) = get_principle_info(model_scaled)
         
                 
-                #Do the same to the actual model
+            #Do the same to the actual model
             
             # translate model
             model.translate(displ,True)
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Translate model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Translate model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Translate model",im)
             cv.WaitKey()
             cv.DestroyWindow("Translate model")
             print "/************EndOfTest*************/"
@@ -169,9 +169,9 @@ class ShapeFitter:
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Rotate model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Rotate model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Rotate model",im)
             cv.WaitKey()
             cv.DestroyWindow("Rotate model")
             print "/************EndOfTest*************/"
@@ -184,9 +184,9 @@ class ShapeFitter:
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Scale model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Scale model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[model.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Scale model",im)
             cv.WaitKey()
             cv.DestroyWindow("Scale model")
             print "/************EndOfTest*************/"
@@ -198,9 +198,9 @@ class ShapeFitter:
         """ DEBUG
         print "/**************Test****************/"
         cv.NamedWindow("Sparse_shape_contour model")
-        img = cv.CloneImage(img_annotated)
-        cv.PolyLine(img,[sparse_shape_contour],1,cv.CV_RGB(0,0,255),1)               
-        cv.ShowImage("Sparse_shape_contour model",img)
+        im = cv.CloneImage(img_annotated)
+        cv.PolyLine(im,[sparse_shape_contour],1,cv.CV_RGB(0,0,255),1)               
+        cv.ShowImage("Sparse_shape_contour model",im)
         cv.WaitKey()
         cv.DestroyWindow("Sparse_shape_contour model")
         print "/************EndOfTest*************/"
@@ -215,9 +215,9 @@ class ShapeFitter:
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Orientation phase: final model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[orient_model_finished.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Orientation phase: final model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[orient_model_finished.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Orientation phase: final model",im)
             cv.WaitKey()
             cv.DestroyWindow("Orientation phase: final model")
             print "/************EndOfTest*************/"
@@ -233,9 +233,9 @@ class ShapeFitter:
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Symmetric phase: final model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[new_model_symm.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Symmetric phase: final model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[new_model_symm.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Symmetric phase: final model",im)
             cv.WaitKey()
             cv.DestroyWindow("Symmetric phase: final model")
             print "/************EndOfTest*************/"
@@ -257,9 +257,9 @@ class ShapeFitter:
             """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Asymmetric phase: final model")
-            img = cv.CloneImage(img_annotated)
-            cv.PolyLine(img,[new_model_symm.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
-            cv.ShowImage("Asymmetric phase: final model",img)
+            im = cv.CloneImage(img_annotated)
+            cv.PolyLine(im,[new_model_symm.polygon_vertices_int()],1,cv.CV_RGB(0,0,255),1)               
+            cv.ShowImage("Asymmetric phase: final model",im)
             cv.WaitKey()
             cv.DestroyWindow("Asymmetric phase: final model")
             print "/************EndOfTest*************/"
@@ -295,7 +295,6 @@ class ShapeFitter:
         
         
     def black_box_opt(self,model,contour, delta = 0.1, num_iters = 100, epsilon = 0.001,exploration_factor=1.5,fine_tune=False,num_fine_tunes=0,mode="asymm",image=None):
-    
         epsilon = 0.001
         score = -1 * model.score(contour,image)
         self.printout("Initial score was %f"%score)
@@ -316,18 +315,21 @@ class ShapeFitter:
             for i in range(len(params)):
                 new_params = list(params)
                 new_params[i] += deltas[i]
+                self.printout("delta %f"%deltas[i])
                 tmpModel = model.from_params(new_params)
                 if(tmpModel != None):
                     new_score = -1 * tmpModel.score(contour, image)
                 else:
                     new_score = score - 1
-                    
+                
+                self.printout("new score %f vs score %f"%(new_score,score))
                 if new_score > score:
                     params = new_params
                     score = new_score
                     deltas[i] *= exploration_factor
                 else:
                     deltas[i] *= -1
+                    self.printout("-delta %f"%deltas[i])
                     new_params = list(params)
                     new_params[i] += deltas[i]
                     tmpModel = model.from_params(new_params)
@@ -335,6 +337,7 @@ class ShapeFitter:
                         new_score = -1 * tmpModel.score(contour, image)
                     else:
                         new_score = score - 1
+                    self.printout("new score %f vs score %f"%(new_score,score))
                     if new_score > score:
                         params = new_params
                         score = new_score
@@ -354,7 +357,7 @@ class ShapeFitter:
             if max([abs(d) for d in deltas]) < epsilon:
                 self.printout("BREAKING")
                 break
-            
+        
         return model.from_params(params)
         
     def printout(self,str):

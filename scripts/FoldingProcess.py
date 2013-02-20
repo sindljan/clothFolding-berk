@@ -10,6 +10,7 @@ import os.path
 import pickle
 import numpy as np
 import tf
+import logging
 from clothing_models import Models
 from shape_window.ShapeWindow import *
 from shape_window import ShapeWindowUtils
@@ -26,7 +27,7 @@ TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
-TYPE = ASYMM 	#Adjust to change which type of model is being created
+TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
 ## Begin of support classes --------------------------------------------
 
@@ -94,6 +95,7 @@ class FoldMaker:
 ## End of Support classes ----------------------------------------------    
 
 def main(args):
+    init()
     imgStartIndex = 1
     #take an initial image from camera
     img = take_picture(imgStartIndex)
@@ -117,13 +119,24 @@ def main(args):
         #excute a fold
         if(execute_fold(model,foldedModel,L) != FoldResults.succesfull):
             return 1
-        model = foldedModel
         #take an image
         img = take_picture(imgStartIndex + i)
         #unwarp image
         unw_img = unwrap_image(img,H)
         #fit the new model to the image
-        (_,model) = fit_model_to_image(model,unw_img,i)
+        (_,model) = fit_model_to_image(foldedModel,unw_img,i)
+
+def init():
+    logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
+                        filename="/media/Data/folding.log",
+                        filemode='w', level=logging.DEBUG)
+    #append logger to console                                
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)        
+    fm = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    console.setFormatter(fm)
+    logging.getLogger('').addHandler(console)
+
 
 ## Return number of fold acording to the chosen model.
 #
@@ -167,7 +180,6 @@ def unwrap_image(image, transformation):
 #   @return Return how succesfull the folding process was.
 def execute_fold(model,foldedModel,foldLine):
     # selected points to be grasped
-    #raw_input("before get_grasp_points...")
     gps = get_grasp_points(model,foldedModel,foldLine)
     if( gps == None):
         return FoldResults.noGraspedPoints
@@ -175,7 +187,7 @@ def execute_fold(model,foldedModel,foldLine):
     #raw_input("before getNewPositionOfGraspPoints...")
     np_gps = get_new_grasp_points_position(gps,foldLine)
     # this part would be done by my hand. literally
-    raw_input("Do the fold and hit enter...")
+    # raw_input("Do the fold and hit enter...")
         # grasped the points
         # move the grasped points to the defined position
         # ungrasp it
@@ -206,6 +218,7 @@ def get_new_grasp_points_position(points,foldLine):
 #   @param foldedModel The model how an observed object would look like after fold
 #   @return List of tuples that represents a position(int the image) of points to be grasped.
 def get_grasp_points(model,foldedModel,foldLine): 
+    show_message("GET_GRASP_POINTS - begin", MsgTypes.debug)
     gps = []
     pointsInModel = model.polygon_vertices_int()
     pointsInFoldedModel = foldedModel.polygon_vertices_int()
@@ -241,6 +254,7 @@ def get_grasp_points(model,foldedModel,foldLine):
          gps = None
     
     show_message("Selected grasped points: " + str(gps), MsgTypes.info)
+    show_message("GET_GRASP_POINTS - end", MsgTypes.debug)
     return gps
 
 def point_line_distance(pt,foldLine):
@@ -267,6 +281,7 @@ def tuple_to_point(pt):
 #   @param i Index that defines fold order
 #   @return fold line as two points in 2D space
 def get_fold_line(model,i):
+    show_message("GET_FOLD_LINE - begin", MsgTypes.debug)
     foldStart = None
     foldEnd = None
     
@@ -348,6 +363,7 @@ def get_fold_line(model,i):
         
     foldLine = [foldStart, foldEnd]
     show_message("New fold line: " + str(foldLine),MsgTypes.info)
+    show_message("GET_FOLD_LINE - end", MsgTypes.debug)
     return foldLine;
 
 ##  Create a new model by folding the old one.
@@ -359,14 +375,14 @@ def get_fold_line(model,i):
 #   @param image An image of folded object
 #   @return A new model with fold.
 def create_folded_model(_model, _image, _foldLine):
-    show_message("CREATE FOLDED MODEL", MsgTypes.debug)
+    show_message("CREATE_FOLDED_MODEL - begin", MsgTypes.debug)
     fm = FoldMaker(_model,_image)
     modelWithFold = fm.get_folded_model(_foldLine)
     
     if(modelWithFold == None):
         sys.exit()
         
-    #""" 
+    """ 
     print "/**************Test****************/"
     cv.NamedWindow("Folded model")
     img = cv.CloneImage(_image)
@@ -378,6 +394,7 @@ def create_folded_model(_model, _image, _foldLine):
     #"""
     
     show_message("Verticies of a model with fold: " + str(modelWithFold.polygon_vertices_int()), MsgTypes.info);
+    show_message("CREATE_FOLDED_MODEL - end", MsgTypes.debug)
     return modelWithFold
     
 ##  Fit a model to an image
@@ -391,12 +408,12 @@ def create_folded_model(_model, _image, _foldLine):
 #   @param image the image that has to be fitted.
 #   @return Fitted model
 def fit_model_to_image(model,image,iteration):
-    show_message("FIT MODEL TO IMAGE", MsgTypes.debug)
+    show_message("FIT_MODEL_TO_IMAGE - begin", MsgTypes.debug)
     # initialization
     background = thresholding.GREEN_BG
     silent = False # true = silent, false = verbose
     show_graphics = True
-    num_iters = 50
+    num_iters = 30
     
     #Properly set phases
     orient_opt      = True
@@ -426,11 +443,11 @@ def fit_model_to_image(model,image,iteration):
     fitter = shape_fitting.ShapeFitter(     ORIENT_OPT=orient_opt,  SYMM_OPT=symm_opt,   
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
-                                            num_iters=num_iters )
-    #if(iteration > 2):                                                    
-    (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+                                            num_iters=num_iters,    HIGH_EXPLORATION=True )                                       
+    if(iteration > 0):                                                    
+        (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
     
-    """
+    """ visualisation
     print "/**************Test****************/"
     im1 = cv.CloneImage(image)
     cv.NamedWindow("Fitted model")
@@ -453,13 +470,14 @@ def fit_model_to_image(model,image,iteration):
     modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
     pickle.dump(final_model, open(modelPath,'w'))
     #"""
-    """ load fitted model from the file
-    modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
-    final_model = pickle.load(open(modelPath))
+    #""" load fitted model from the file
+    if(iteration < 1):
+        modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+        final_model = pickle.load(open(modelPath))
     #"""
     
     final_model.set_image(None)
-    show_message("FIT MODEL TO IMAGE - DONE", MsgTypes.debug)
+    show_message("FIT_MODEL_TO_IMAGE - end", MsgTypes.debug)
     return (final_model,final_model)
         
 ##  Load an initial model from HDD
@@ -485,10 +503,11 @@ def get_initial_model():
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
 def take_picture(index):
-    print "TAKE_PICTURE"
+    logging.debug("TAKE_PICTURE - Begin")
     takenImage = None
     
     """ take a picture from Kinect
+    logging.debug("TAKE_PICTURE - Picture is from Kinect.")
     rospy.wait_for_service('get_kinect_image')
     try:
         service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
@@ -515,6 +534,7 @@ def take_picture(index):
     #"""
     
     #""" take a picture from file
+    logging.debug("TAKE_PICTURE - Picture is from a file.")
     if(TYPE == ASYMM):
         path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     elif(TYPE == TEE_SKEL):
@@ -536,6 +556,7 @@ def take_picture(index):
     #cv.DestroyWindow("Image from Kinect")
     #"""
     
+    logging.debug("TAKE_PICTURE - End")
     return takenImage
 
 ## Compute and return homography between side and top view
@@ -560,14 +581,17 @@ def get_homography():
 #  @param msgType Type of message. One of the elements of MsgTypes class.
 def show_message(text,msgType):
     if(msgType == MsgTypes.info):
-        print "INFO: " + text
+        logging.info(text)
+        #print "INFO: " + text
     elif(msgType == MsgTypes.debug):
-        #return
-        print "DEBUG: " + text
+        logging.debug(text)
+        #print "DEBUG: " + text
     elif(msgType == MsgTypes.exception):
-        print "ERROR: " + text
+        logging.error(text)
+        #print "ERROR: " + text
     else:
-        print "Uknown type: " + text
+        logging.warning('Unknown message type: %s'%text)
+        #print "Uknown type: " + text
     
 ## Parse input arguments using argparse package.
 #
