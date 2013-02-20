@@ -322,8 +322,8 @@ def get_fold_line(model,i):
             sbr = Vector2D.translate_pt(br,Vector2D.pt_diff(rsrc,rs)) # shifted br by vector (rs,rsrc)
             foldLineCenter = Vector2D.pt_center(rsrc,sbr)
             # make foldline little bit bigger than conture
-            rsrc = Vector2D.scale_pt(rsrc,1.3,foldLineCenter)
-            sbr = Vector2D.scale_pt(sbr,1.4,foldLineCenter)
+            rsrc = Vector2D.scale_pt(rsrc,1.5,foldLineCenter)
+            sbr = Vector2D.scale_pt(sbr,1.5,foldLineCenter)
             # transfer points to corect data type
             foldStart = (int(Vector2D.pt_x(rsrc)),int(Vector2D.pt_y(rsrc)))
             foldEnd = (int(Vector2D.pt_x(sbr)),int(Vector2D.pt_y(sbr)))
@@ -403,11 +403,11 @@ def fit_model_to_image(model,image,iteration):
     symm_opt        = True
     asymm_opt      = True
     fine_tuning_opt= True
-    """
+    #"""
     if(iteration == 0): # different optimalization parameters first fitting
         asymm_opt       = False
         fine_tuning_opt = False        
-    """
+    #"""
     
     #Create an image to output
     image_out = cv.CloneImage(image)
@@ -515,8 +515,13 @@ def take_picture(index):
     #"""
     
     #""" take a picture from file
-    #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
-    path = "/media/Data/clothImages/towel/imT_%02d.png" % index
+    if(TYPE == ASYMM):
+        path = "/media/Data/clothImages/towel/imT_%02d.png" % index
+    elif(TYPE == TEE_SKEL):
+        path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+    else:
+        show_message("Unknown model type.",MsgTypes.exception)
+        sys.exit()    
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:
