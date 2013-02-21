@@ -127,9 +127,13 @@ def main(args):
         (_,model) = fit_model_to_image(foldedModel,unw_img,i)
 
 def init():
+    """
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
                         filename="/media/Data/folding.log",
-                        filemode='w', level=logging.DEBUG)
+                        filemode='w', level=logging.INFO)"""
+    logging.basicConfig(format='%(message)s',
+                        filename="/media/Data/folding.log",
+                        filemode='w', level=logging.INFO)
     #append logger to console                                
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG)        
@@ -418,10 +422,10 @@ def fit_model_to_image(model,image,iteration):
     #Properly set phases
     orient_opt      = True
     symm_opt        = True
-    asymm_opt      = True
-    fine_tuning_opt= True
+    asymm_opt      = False
+    fine_tuning_opt= False
     #"""
-    if(iteration == 0): # different optimalization parameters first fitting
+    if(iteration == 0): # different optimalization parameters for first fitting
         asymm_opt       = False
         fine_tuning_opt = False        
     #"""
@@ -443,7 +447,7 @@ def fit_model_to_image(model,image,iteration):
     fitter = shape_fitting.ShapeFitter(     ORIENT_OPT=orient_opt,  SYMM_OPT=symm_opt,   
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
-                                            num_iters=num_iters,    HIGH_EXPLORATION=True )                                       
+                                            num_iters=num_iters)                                       
     if(iteration > 0):                                                    
         (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
     
