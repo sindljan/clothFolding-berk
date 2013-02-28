@@ -29,8 +29,6 @@ TEE_SKEL = 3 		# Tee model
 
 TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
-cntr = 0
-
 ## Begin of support classes --------------------------------------------
 
 class FoldResults:
@@ -179,12 +177,6 @@ def unwrap_image(image, transformation, sc_correction = False):
     # do the transformation
     unw_img = cv.CreateImage((640,480),cv.IPL_DEPTH_8U,3)
     cv.WarpPerspective(image,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (0,0,0,0)) # pixels that are out of the image are set to black
-    global cntr;
-    cv.NamedWindow("UW im %d"%cntr)
-    im = cv.CloneImage(unw_img)
-    cv.ShowImage("UW im %d"%cntr,im)
-    cv.WaitKey()
-    cntr += 1
     return unw_img
    
 ## Execute fold according to the fold line
