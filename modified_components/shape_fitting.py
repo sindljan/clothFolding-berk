@@ -12,6 +12,7 @@ import math
 import cv
 import os.path
 import pickle
+import logging
 from visual_feedback_utils import Vector2D
 from clothing_models import Models
 
@@ -243,7 +244,7 @@ class ShapeFitter:
         else:
             new_model_symm = model_oriented    
         if SHOW_SYMM_MODEL:
-           new_model_symm.draw_to_image(img=img_annotated,color=cv.CV_RGB(0,255,0))
+            new_model_symm.draw_to_image(img=img_annotated,color=cv.CV_RGB(0,255,0))
         
         # Asymmetric phase  
         model=new_model_symm.make_asymm()
@@ -295,7 +296,7 @@ class ShapeFitter:
         
         
     def black_box_opt(self,model,contour, delta = 0.1, num_iters = 100, epsilon = 0.001,exploration_factor=1.5,fine_tune=False,num_fine_tunes=0,mode="asymm",image=None):
-        epsilon = 0.001
+        epsilon = 0.002
         score = -1 * model.score(contour,image)
         self.printout("Initial score was %f"%score)
         params = model.params()
@@ -310,40 +311,59 @@ class ShapeFitter:
             cv.ShowImage("Optimizing",img)
             cv.WaitKey(50)
         # optimalization of chosen parameter
+        logging.info('pD;pnS;nD;nnS;bS')
         for it in range(num_iters):
             self.printout("Starting iteration number %d"%it)
             for i in range(len(params)):
+                pD = nD = nnS = pnS = 0; #Debug
                 new_params = list(params)
+                pD = deltas[i] #Debug
                 new_params[i] += deltas[i]
-                self.printout("delta %f"%deltas[i])
                 tmpModel = model.from_params(new_params)
                 if(tmpModel != None):
                     new_score = -1 * tmpModel.score(contour, image)
                 else:
                     new_score = score - 1
-                
-                self.printout("new score %f vs score %f"%(new_score,score))
+                """DEBUG
+                cv.NamedWindow("PD")
+                img = cv.CloneImage(image)
+                tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
+                cv.ShowImage("PD",img)
+                cv.WaitKey()
+                cv.DestroyWindow("PD")
+                #"""
+                pnS = new_score #Debug
                 if new_score > score:
                     params = new_params
                     score = new_score
                     deltas[i] *= exploration_factor
                 else:
                     deltas[i] *= -1
-                    self.printout("-delta %f"%deltas[i])
                     new_params = list(params)
+                    nD = deltas[i] #Debug
                     new_params[i] += deltas[i]
                     tmpModel = model.from_params(new_params)
                     if(tmpModel != None):
                         new_score = -1 * tmpModel.score(contour, image)
                     else:
                         new_score = score - 1
-                    self.printout("new score %f vs score %f"%(new_score,score))
+                    """DEBUG
+                    cv.NamedWindow("ND")
+                    img = cv.CloneImage(image)
+                    tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
+                    cv.ShowImage("ND",img)
+                    cv.WaitKey()
+                    cv.DestroyWindow("ND")
+                    #"""
+                    nnS = new_score #Debug
                     if new_score > score:
                         params = new_params
                         score = new_score
                         deltas[i] *= exploration_factor  
                     else:
                         deltas[i] *= 0.5
+                logging.info('%f;%f;%f;%f;%f'%(pD,pnS,nD,nnS,score)) #Debug
+                
             self.printout("Current best score is %f"%score)
             if(self.SHOW):
                 img = cv.CloneImage(model.image)

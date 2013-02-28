@@ -3,7 +3,7 @@
 ##    @package conture_model_folding
 # Stores images from Kinect to HDD to defined folder
 
-import roslib; roslib.load_manifest('conture_model_folding')
+import roslib; roslib.load_manifest('contour_model_folding')
 import sys
 import math
 import rospy

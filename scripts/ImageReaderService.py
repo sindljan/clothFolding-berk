@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #An package that provides folding process.
-import roslib; roslib.load_manifest('conture_model_folding')
+import roslib; roslib.load_manifest('contour_model_folding')
 import rospy
 from sensor_msgs.msg import Image
 from conture_model_folding.srv import *
