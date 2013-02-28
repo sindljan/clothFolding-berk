@@ -29,6 +29,8 @@ TEE_SKEL = 3 		# Tee model
 
 TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
+cntr = 0
+
 ## Begin of support classes --------------------------------------------
 
 class FoldResults:
@@ -102,7 +104,7 @@ def main(args):
     #compute a homography
     H = get_homography()
     #unwarped the image. Turn the image into a top view.
-    unw_img = unwrap_image(img,H)
+    unw_img = unwrap_image(img,H,True)
     #Get initial model
     model = get_initial_model()
     initFittedModel = model
@@ -158,22 +160,31 @@ def get_number_of_folds():
 #   In fact this function creates a top view from side view.
 #   @param image An input image with perspective distortion
 #   @param transformation The transformation that converts side view to top view
+#   @param sc_correction If true than do the screen center correction. Correct homography to see whole image im windw after homography usage.
 #   @return Return top view image.
-def unwrap_image(image, transformation):
+def unwrap_image(image, transformation, sc_correction = False):
     H = transformation
-    # calculate transformation between image centers
-    src_center = [cv.GetSize(image)[0]/2,cv.GetSize(image)[1]/2]
-    z = 1./(H[2,0]*src_center[0]+H[2,1]*src_center[1]+H[2,2])
-    dstX = (H[0,0]*src_center[0]+H[0,1]*src_center[1]+H[0,2])*z
-    dstY = (H[1,0]*src_center[0]+H[1,1]*src_center[1]+H[1,2])*z
-    
-    # now when we know corespondence between centres we can update transformation
-    H[0,2] += src_center[0] - dstX
-    H[1,2] += src_center[1] - dstY
+    # do the image center correciton
+    if(sc_correction):
+        # calculate transformation between image centers
+        src_center = [cv.GetSize(image)[0]/2,cv.GetSize(image)[1]/2]
+        z = 1./(H[2,0]*src_center[0]+H[2,1]*src_center[1]+H[2,2])
+        dstX = (H[0,0]*src_center[0]+H[0,1]*src_center[1]+H[0,2])*z
+        dstY = (H[1,0]*src_center[0]+H[1,1]*src_center[1]+H[1,2])*z
+        
+        # now when we know corespondence between centres we can update transformation
+        H[0,2] += src_center[0] - dstX
+        H[1,2] += src_center[1] - dstY
     
     # do the transformation
     unw_img = cv.CreateImage((640,480),cv.IPL_DEPTH_8U,3)
     cv.WarpPerspective(image,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (0,0,0,0)) # pixels that are out of the image are set to black
+    global cntr;
+    cv.NamedWindow("UW im %d"%cntr)
+    im = cv.CloneImage(unw_img)
+    cv.ShowImage("UW im %d"%cntr,im)
+    cv.WaitKey()
+    cntr += 1
     return unw_img
    
 ## Execute fold according to the fold line
@@ -422,8 +433,8 @@ def fit_model_to_image(model,image,iteration):
     #Properly set phases
     orient_opt      = True
     symm_opt        = True
-    asymm_opt      = False
-    fine_tuning_opt= False
+    asymm_opt      = True
+    fine_tuning_opt= True
     #"""
     if(iteration == 0): # different optimalization parameters for first fitting
         asymm_opt       = False
@@ -471,16 +482,16 @@ def fit_model_to_image(model,image,iteration):
     #"""
 
     """ save fitted model to the file
-    modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+    final_model.set_image(None)
+    modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
     pickle.dump(final_model, open(modelPath,'w'))
     #"""
     #""" load fitted model from the file
     if(iteration < 1):
-        modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+        modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
         final_model = pickle.load(open(modelPath))
     #"""
     
-    final_model.set_image(None)
     show_message("FIT_MODEL_TO_IMAGE - end", MsgTypes.debug)
     return (final_model,final_model)
         
@@ -542,7 +553,7 @@ def take_picture(index):
     if(TYPE == ASYMM):
         path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     elif(TYPE == TEE_SKEL):
-        path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+        path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
     else:
         show_message("Unknown model type.",MsgTypes.exception)
         sys.exit()    

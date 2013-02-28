@@ -117,7 +117,7 @@ class Model:
         model_arr = array(model_contour)
         contour_arr = array(sparse_contour)
         result,dists = nn_solver.nn(np.array (sparse_contour, 'float32'),np.array (model_contour, 'float32'), num_neighbors=1,algorithm="kmeans",branching=32, iterations=3, checks=16);
-        return [sqrt(sqrt(sqrt(dist))) for dist in dists]
+        return [sqrt(dist) for dist in dists]
 
     def dist_fxn(self,val):
         return val**2
@@ -308,17 +308,17 @@ class Point_Model(Model):
                 rel_pt = self.__getattr__(rel_pt_name)()
                 dx = pt_x(pt) - pt_x(rel_pt)
                 dy = pt_y(pt) - pt_y(rel_pt)
-                print name + ' dx={0} dy={1}.'.format(dx,dy) #DEBUG
+                #print name + ' dx={0} dy={1}.'.format(dx,dy) #DEBUG
                 output.append(dx)
                 output.append(dy)
             else:
-                print name + ' dx={0} dy={1}.'.format(pt_x(pt),pt_y(pt)) #DEBUG
+                #print name + ' dx={0} dy={1}.'.format(pt_x(pt),pt_y(pt)) #DEBUG
                 output.append(pt_x(pt))
                 output.append(pt_y(pt))
         for param in self.scalar_params:
-            print "Scalar " + str(param) #DEBUG
+            #print "Scalar " + str(param) #DEBUG
             output.append(param)
-            print "All params = " + str(output) #DEBUG
+            #print "All params = " + str(output) #DEBUG
         return output
     
     #Reads in a list of x,y values, and creates a new instance of myself with those points    

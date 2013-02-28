@@ -110,8 +110,8 @@ class ShapeFitter:
                 cv.WaitKey()
             
             angle = model_theta - real_theta
-            if self.ORIENT_OPT:
-                angle = 0
+            #if self.ORIENT_OPT:
+            #    angle = 0
             scale = real_scale/float(model_scale)
             if scale < 0.25:
                 scale = 1
@@ -119,7 +119,7 @@ class ShapeFitter:
             model_rot = rotate_poly(model_trans,-1*angle,real_center)
             model_scaled = scale_poly(model_rot,scale,real_center)
                       
-            """ DEBUG
+            #""" DEBUG
             print "/**************Test****************/"
             A = [ (int(pt[0]),int(pt[1])) for pt in model_trans]
             B = [ (int(pt[0]),int(pt[1])) for pt in model_rot]
@@ -213,7 +213,7 @@ class ShapeFitter:
             self.printout("ORIENTATION OPTIMIZATION")
             init_model = Models.Orient_Model(model,pi/2)
             orient_model_finished = self.black_box_opt(model=init_model,contour=shape_contour,num_iters = self.num_iters,delta=init_model.preferred_delta(),epsilon = 0.01,mode="orient",image=img) 
-            """ DEBUG
+            #""" DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Orientation phase: final model")
             im = cv.CloneImage(img_annotated)
@@ -306,10 +306,11 @@ class ShapeFitter:
             cv.NamedWindow("Optimizing")
             img = cv.CloneImage(model.image)
             tmpModel = model.from_params(params)
+            model.draw_to_image(img,cv.CV_RGB(0,255,0))
             if(tmpModel != None):
                 tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
             cv.ShowImage("Optimizing",img)
-            cv.WaitKey(50)
+            cv.WaitKey()
         # optimalization of chosen parameter
         logging.info('pD;pnS;nD;nnS;bS')
         for it in range(num_iters):
@@ -377,7 +378,7 @@ class ShapeFitter:
             if max([abs(d) for d in deltas]) < epsilon:
                 self.printout("BREAKING")
                 break
-        
+                
         return model.from_params(params)
         
     def printout(self,str):
