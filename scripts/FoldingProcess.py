@@ -423,14 +423,19 @@ def fit_model_to_image(model,image,iteration):
     num_iters = 30
     
     #Properly set phases
-    orient_opt      = True
-    symm_opt        = True
+    orient_opt     = True
+    symm_opt       = True
     asymm_opt      = True
-    fine_tuning_opt= True
+    fine_tuning_opt= False
     #"""
     if(iteration == 0): # different optimalization parameters for first fitting
         asymm_opt       = False
         fine_tuning_opt = False        
+    else:
+        orient_opt     = True
+        symm_opt       = True
+        asymm_opt      = True
+        fine_tuning_opt= True
     #"""
     
     #Create an image to output
@@ -453,6 +458,8 @@ def fit_model_to_image(model,image,iteration):
                                             num_iters=num_iters)                                       
     if(iteration > 0):                                                    
         (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+    
+    #(nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
     
     """ visualisation
     print "/**************Test****************/"
@@ -480,6 +487,7 @@ def fit_model_to_image(model,image,iteration):
     #"""
     #""" load fitted model from the file
     if(iteration < 1):
+        #modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
         modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
         final_model = pickle.load(open(modelPath))
     #"""
@@ -545,6 +553,7 @@ def take_picture(index):
     if(TYPE == ASYMM):
         path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     elif(TYPE == TEE_SKEL):
+        #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
         path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
     else:
         show_message("Unknown model type.",MsgTypes.exception)

@@ -90,6 +90,7 @@ class Model:
         return 0
 
     def contour_score(self,contour):
+        print "Use expected metric (Model::contour_score)."
         model_dist_param = 0.5
         contour_dist_param = 0.5
         sparse_contour = make_sparse(contour,1000)
@@ -104,12 +105,17 @@ class Model:
         #Normalize
         model_dist_energy /= float(self.dist_fxn(max(self.image.width,self.image.height)))
     
+        #""" Original
         nn_contour = nn(extra_sparse_contour,model_contour)
         contour_dist_energy = sum([self.dist_fxn(dist) for dist in nn_contour]) / float(len(nn_contour))
         #Normalize
         contour_dist_energy /= float(self.dist_fxn(max(self.image.width,self.image.height)))
         
         energy = model_dist_param * model_dist_energy + contour_dist_param * contour_dist_energy
+        #"""
+        #new
+        #energy = model_dist_energy
+        
         return energy
         
     def nearest_neighbors_fast(self,model_contour,sparse_contour):
@@ -120,7 +126,7 @@ class Model:
         return [sqrt(dist) for dist in dists]
 
     def dist_fxn(self,val):
-        return val**2
+        return val**2 
 
     def beta(self):
         return 1 
@@ -460,10 +466,48 @@ class Point_Model_Folded(Point_Model):
         self.initial_model = initial_model
         self.image = None
         Point_Model.__init__(self,*pts)
-        
-
+    
     def name(self):
         return "Folded " + self.initial_model.name()
+        
+    def contour_score(self,contour):
+        print "Use expected metric (Point_Model_Folded::contour_score)."
+        sparse_contour = make_sparse(contour,1000)
+        num_model_pts = 30*len(self.sides())
+        
+        nn=self.nearest_neighbors_fast
+        extra_sparse_contour = make_sparse(contour,num_model_pts)
+        foldConture = self.getFoldConturePoints(contour)
+        
+        #"""Visualisation
+        print "/**************Test****************/"
+        cv.NamedWindow("Fold conture selection")
+        img = cv.CloneImage(self.image)
+        cv.DrawContours(img,contour,cv.CV_RGB(0,0,255),cv.CV_RGB(0,0,255),0,1,8,(0,0))              
+        [cv.Circle(img,pt,2,cv.CV_RGB(255,0,0),1,8,0) for pt in foldConture]
+        cv.ShowImage("Fold conture selection",img)
+        cv.WaitKey()
+        cv.DestroyWindow("Fold conture selection")
+        print "/************EndOfTest*************/"
+        #"""
+        
+        
+        nn_model = nn(foldConture,sparse_contour)
+        model_dist_energy = sum([self.dist_fxn(dist) for dist in nn_model]) / float(len(nn_model))
+        #Normalize
+        model_dist_energy /= float(self.dist_fxn(max(self.image.width,self.image.height)))
+        
+        return model_dist_energy   
+    
+    def getFoldConturePoints(self,contour):
+
+        fold_contour = []
+        fl = self.foldline()
+        for pt in contour:
+            if(pt_seg_distance(pt,fl) < 10):
+                fold_contour.append(pt)
+        
+        return fold_contour
         
    # def variable_param_names(self):
    #     return ["fold_angle","fold_displ"]
@@ -705,6 +749,7 @@ class Point_Model_Variable_Symm(Point_Model):
         myclone = self.__class__(self.symmetric,*init_args)
         myclone.set_image(self.image)
         return myclone
+        
         
 ###
 # Defining some clothing models

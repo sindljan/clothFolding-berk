@@ -119,7 +119,7 @@ class ShapeFitter:
             model_rot = rotate_poly(model_trans,-1*angle,real_center)
             model_scaled = scale_poly(model_rot,scale,real_center)
                       
-            #""" DEBUG
+            """ DEBUG
             print "/**************Test****************/"
             A = [ (int(pt[0]),int(pt[1])) for pt in model_trans]
             B = [ (int(pt[0]),int(pt[1])) for pt in model_rot]
@@ -213,7 +213,7 @@ class ShapeFitter:
             self.printout("ORIENTATION OPTIMIZATION")
             init_model = Models.Orient_Model(model,pi/2)
             orient_model_finished = self.black_box_opt(model=init_model,contour=shape_contour,num_iters = self.num_iters,delta=init_model.preferred_delta(),epsilon = 0.01,mode="orient",image=img) 
-            #""" DEBUG
+            """ DEBUG
             print "/**************Test****************/"
             cv.NamedWindow("Orientation phase: final model")
             im = cv.CloneImage(img_annotated)
@@ -297,8 +297,9 @@ class ShapeFitter:
         
     def black_box_opt(self,model,contour, delta = 0.1, num_iters = 100, epsilon = 0.001,exploration_factor=1.5,fine_tune=False,num_fine_tunes=0,mode="asymm",image=None):
         epsilon = 0.002
+        visMult = 10**8
         score = -1 * model.score(contour,image)
-        self.printout("Initial score was %f"%score)
+        self.printout("Initial score was %f"%(score*visMult))
         params = model.params()
         deltas = [delta for p in params]
         # visualisation 
@@ -310,12 +311,18 @@ class ShapeFitter:
             if(tmpModel != None):
                 tmpModel.draw_to_image(img,cv.CV_RGB(255,0,0))
             cv.ShowImage("Optimizing",img)
-            cv.WaitKey()
+            cv.WaitKey(50)
         # optimalization of chosen parameter
         logging.info('pD;pnS;nD;nnS;bS')
         for it in range(num_iters):
             self.printout("Starting iteration number %d"%it)
             for i in range(len(params)):
+                #"""DEBUG
+                cv.NamedWindow("Opt step")
+                img = cv.CloneImage(image)
+                model.from_params(params).draw_to_image(img,cv.CV_RGB(255,0,0))
+                cv.ShowImage("Opt step",img)
+                #"""
                 pD = nD = nnS = pnS = 0; #Debug
                 new_params = list(params)
                 pD = deltas[i] #Debug
@@ -325,6 +332,10 @@ class ShapeFitter:
                     new_score = -1 * tmpModel.score(contour, image)
                 else:
                     new_score = score - 1
+                #"""DEBUG
+                tmpModel.draw_to_image(img,cv.CV_RGB(0,255,0))
+                cv.ShowImage("Opt step",img)
+                #"""
                 """DEBUG
                 cv.NamedWindow("PD")
                 img = cv.CloneImage(image)
@@ -348,6 +359,10 @@ class ShapeFitter:
                         new_score = -1 * tmpModel.score(contour, image)
                     else:
                         new_score = score - 1
+                    #"""DEBUG
+                    tmpModel.draw_to_image(img,cv.CV_RGB(0,0,255))
+                    cv.ShowImage("Opt step",img)
+                    #"""                        
                     """DEBUG
                     cv.NamedWindow("ND")
                     img = cv.CloneImage(image)
@@ -363,10 +378,13 @@ class ShapeFitter:
                         deltas[i] *= exploration_factor  
                     else:
                         deltas[i] *= 0.5
-                logging.info('%f;%f;%f;%f;%f'%(pD,pnS,nD,nnS,score)) #Debug
+                logging.info('%f;%f;%f;%f;%f'%(pD,pnS*visMult,nD,nnS*visMult,score*visMult)) #Debug
+                cv.WaitKey(200) #DEBUG
+            
                 
             self.printout("Current best score is %f"%score)
             if(self.SHOW):
+                """
                 img = cv.CloneImage(model.image)
                 tmpModel = model.from_params(params)
                 if(tmpModel != None):
@@ -375,10 +393,11 @@ class ShapeFitter:
                     cv.SaveImage("%s_iter_%d.png"%(mode,it),img)
                 cv.ShowImage("Optimizing",img)
                 cv.WaitKey(50)
+                """
             if max([abs(d) for d in deltas]) < epsilon:
                 self.printout("BREAKING")
                 break
-                
+        cv.DestroyWindow("Opt step") #DEBUG        
         return model.from_params(params)
         
     def printout(self,str):

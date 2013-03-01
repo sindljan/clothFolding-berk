@@ -1,4 +1,8 @@
 Position of modified scripts, which are part of another repositories
 
-shape_fitting.py  ../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/
-Models.py         ../visual_feedback/clothing_models/src/clothing_models/
+"File name"      "File source directory"
+Models.py        ../../../visual_feedback/clothing_models/src/clothing_models/Models.py
+shape_fitting.py ../../../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/shape_fitting.py
+thresholding.py  ../../../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/thresholding.py
+model_maker.py   ../../../visual_feedback/clothing_models/scripts/model_maker.py
+
