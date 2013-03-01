@@ -19,6 +19,7 @@ from visual_feedback_utils import Vector2D, thresholding, shape_fitting
 from sensor_msgs.msg import Image
 from conture_model_folding.srv import *
 from cv_bridge import CvBridge, CvBridgeError
+from datetime import datetime
 
 ASYMM = 0 			# Asymmetric polygon model
 #SYMM = 1 			# Symmetric polygon model
@@ -130,10 +131,13 @@ def init():
     """
     logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s',
                         filename="/media/Data/folding.log",
-                        filemode='w', level=logging.INFO)"""
+                        filemode='w', level=logging.INFO)
+    #"""
+    #"""
     logging.basicConfig(format='%(message)s',
                         filename="/media/Data/folding.log",
                         filemode='w', level=logging.INFO)
+    #"""                            
     #append logger to console                                
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG)        
@@ -419,24 +423,19 @@ def fit_model_to_image(model,image,iteration):
     # initialization
     background = thresholding.GREEN_BG
     silent = False # true = silent, false = verbose
-    show_graphics = True
-    num_iters = 30
+    show_graphics = False
+    num_iters = 15
     
     #Properly set phases
     orient_opt     = True
     symm_opt       = True
     asymm_opt      = True
-    fine_tuning_opt= False
-    #"""
+    fine_tuning_opt= True
     if(iteration == 0): # different optimalization parameters for first fitting
-        asymm_opt       = False
-        fine_tuning_opt = False        
-    else:
-        orient_opt     = True
-        symm_opt       = True
-        asymm_opt      = True
-        fine_tuning_opt= True
-    #"""
+        #asymm_opt       = False
+        #fine_tuning_opt = False 
+        num_iters = 25       
+    
     
     #Create an image to output
     image_out = cv.CloneImage(image)
@@ -456,40 +455,46 @@ def fit_model_to_image(model,image,iteration):
                                             ASYMM_OPT=asymm_opt,    FINE_TUNE=fine_tuning_opt,
                                             SILENT=silent,          SHOW=show_graphics,
                                             num_iters=num_iters)                                       
-    if(iteration > 0):                                                    
-        (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+                        
+    before = datetime.now()
+    final_model = fitted_model = None
+    #if(iteration > 0):                                                    
+    #    (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)
     
-    #(nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+    (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
+    show_message("Fitting time %s"%str(datetime.now()-before), MsgTypes.info)
     
-    """ visualisation
+    """ save fitted model to the file
+    final_model.set_image(None)
+    modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
+    pickle.dump(final_model, open(modelPath,'w'))
+    #"""
+    """ load fitted model from the file
+    if(iteration < 1):
+        #modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+        modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
+        final_model = pickle.load(open(modelPath))
+    #"""
+    
+    #""" visualisation
     print "/**************Test****************/"
     im1 = cv.CloneImage(image)
     cv.NamedWindow("Fitted model")
-    cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    if(fitted_model != None):
+        cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
     cv.ShowImage("Fitted model",im1)
     cv.WaitKey()
     
     im2 = cv.CloneImage(image)
     cv.NamedWindow("Final model")
-    cv.PolyLine(im2,[final_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    if(final_model != None):
+        cv.PolyLine(im2,[final_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
     cv.ShowImage("Final model",im2)
     
     cv.WaitKey()
     cv.DestroyWindow("Fitted model")
     cv.DestroyWindow("Final model")
     print "/************EndOfTest*************/"
-    #"""
-
-    """ save fitted model to the file
-    final_model.set_image(None)
-    modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
-    pickle.dump(final_model, open(modelPath,'w'))
-    #"""
-    #""" load fitted model from the file
-    if(iteration < 1):
-        #modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
-        modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
-        final_model = pickle.load(open(modelPath))
     #"""
     
     show_message("FIT_MODEL_TO_IMAGE - end", MsgTypes.debug)
@@ -553,8 +558,8 @@ def take_picture(index):
     if(TYPE == ASYMM):
         path = "/media/Data/clothImages/towel/imT_%02d.png" % index
     elif(TYPE == TEE_SKEL):
-        #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
-        path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
+        path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+        #path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
     else:
         show_message("Unknown model type.",MsgTypes.exception)
         sys.exit()    

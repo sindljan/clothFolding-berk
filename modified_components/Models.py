@@ -90,7 +90,6 @@ class Model:
         return 0
 
     def contour_score(self,contour):
-        print "Use expected metric (Model::contour_score)."
         model_dist_param = 0.5
         contour_dist_param = 0.5
         sparse_contour = make_sparse(contour,1000)
@@ -126,7 +125,7 @@ class Model:
         return [sqrt(dist) for dist in dists]
 
     def dist_fxn(self,val):
-        return val**2 
+        return val**3 
 
     def beta(self):
         return 1 
@@ -471,7 +470,6 @@ class Point_Model_Folded(Point_Model):
         return "Folded " + self.initial_model.name()
         
     def contour_score(self,contour):
-        print "Use expected metric (Point_Model_Folded::contour_score)."
         sparse_contour = make_sparse(contour,1000)
         num_model_pts = 30*len(self.sides())
         
@@ -479,7 +477,7 @@ class Point_Model_Folded(Point_Model):
         extra_sparse_contour = make_sparse(contour,num_model_pts)
         foldConture = self.getFoldConturePoints(contour)
         
-        #"""Visualisation
+        """Visualisation
         print "/**************Test****************/"
         cv.NamedWindow("Fold conture selection")
         img = cv.CloneImage(self.image)
@@ -500,12 +498,18 @@ class Point_Model_Folded(Point_Model):
         return model_dist_energy   
     
     def getFoldConturePoints(self,contour):
-
+        numOfPoints = 20        
         fold_contour = []
-        fl = self.foldline()
-        for pt in contour:
-            if(pt_seg_distance(pt,fl) < 10):
-                fold_contour.append(pt)
+        (_,_,spt,ept) = self.foldline() #spt...start_point, ept...end point
+        (x,y) = (0,1)
+        x_step = (ept[x]-spt[x])/numOfPoints
+        px = spt[x]
+        for i in range(0, numOfPoints):
+          m = (ept[y]-spt[y])/(ept[x]-spt[x])
+          py = m*(px-spt[x])+spt[y]
+          pt = (int(px),int(py))  
+          px += x_step
+          fold_contour.append(pt)
         
         return fold_contour
         
