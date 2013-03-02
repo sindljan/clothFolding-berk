@@ -20,7 +20,7 @@ from conture_model_folding.srv import *
 from cv_bridge import CvBridge, CvBridgeError
 
 def main():
-    img = take_picture(2)
+    img = take_picture(4)
     #compute a homography
     H = get_homography()
     #unwarped the image. Turn the image into the top view.
@@ -87,7 +87,7 @@ def take_picture(index):
     print "TAKE_PICTURE"
     takenImage = None
     
-    """
+    #"""
     #take a picture from Kinect
     rospy.wait_for_service('get_kinect_image')
     try:
@@ -114,9 +114,10 @@ def take_picture(index):
     #cv.SaveImage("./im.png",takenImage)
     #"""
     
-    #""" take a picture from file
+    """ take a picture from file
     #path = "/media/Data/clothImages/towel/imA%02d.png" % index
-    path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
+    path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+    #path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
     try:
        takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
     except:

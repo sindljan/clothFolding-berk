@@ -104,16 +104,13 @@ class Model:
         #Normalize
         model_dist_energy /= float(self.dist_fxn(max(self.image.width,self.image.height)))
     
-        #""" Original
         nn_contour = nn(extra_sparse_contour,model_contour)
         contour_dist_energy = sum([self.dist_fxn(dist) for dist in nn_contour]) / float(len(nn_contour))
         #Normalize
         contour_dist_energy /= float(self.dist_fxn(max(self.image.width,self.image.height)))
         
         energy = model_dist_param * model_dist_energy + contour_dist_param * contour_dist_energy
-        #"""
-        #new
-        #energy = model_dist_energy
+
         
         return energy
         
@@ -125,7 +122,7 @@ class Model:
         return [sqrt(dist) for dist in dists]
 
     def dist_fxn(self,val):
-        return val**3 
+        return val**4 
 
     def beta(self):
         return 1 
@@ -498,7 +495,7 @@ class Point_Model_Folded(Point_Model):
         return model_dist_energy   
     
     def getFoldConturePoints(self,contour):
-        numOfPoints = 20        
+        numOfPoints = 30        
         fold_contour = []
         (_,_,spt,ept) = self.foldline() #spt...start_point, ept...end point
         (x,y) = (0,1)

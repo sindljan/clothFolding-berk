@@ -15,6 +15,7 @@ import pickle
 import logging
 from visual_feedback_utils import Vector2D
 from clothing_models import Models
+from datetime import datetime
 
 SHOW_CONTOURS = True 			# Draw the contours to the annotated image?
 SHOW_INIT_PTS = False 			# Draw the center and top points to the image?
@@ -281,22 +282,20 @@ class ShapeFitter:
         
         # Find nearest points 
         nearest_pts = []
+
         for vert in final_model.polygon_vertices():
             nearest_pt = min(shape_contour,key=lambda pt: Vector2D.pt_distance(pt,vert))
             cv.Circle(img_annotated,nearest_pt,5,cv.CV_RGB(255,255,255),3)
             nearest_pts.append(nearest_pt)
                 
         fitted_model = Models.Point_Model_Contour_Only_Asymm(*nearest_pts)
-        #fitted_model = final_model
+
         if SHOW_FITTED:
             fitted_model.draw_to_image(img=img_annotated,color=cv.CV_RGB(0,255,255))
         return (nearest_pts,final_model,fitted_model)
-    
-
-        
         
     def black_box_opt(self,model,contour, delta = 0.1, num_iters = 100, epsilon = 0.001,exploration_factor=1.5,fine_tune=False,num_fine_tunes=0,mode="asymm",image=None):
-        epsilon = 0.002
+        epsilon = 1
         visMult = 10**8
         score = -1 * model.score(contour,image)
         self.printout("Initial score was %f"%(score*visMult))
@@ -313,7 +312,8 @@ class ShapeFitter:
             cv.ShowImage("Optimizing",img)
             cv.WaitKey(50)
         # optimalization of chosen parameter
-        logging.info('pD;pnS;nD;nnS;bS')
+        #logging.info('pD;pnS;nD;nnS;bS')
+        bi = datetime.now()
         for it in range(num_iters):
             self.printout("Starting iteration number %d"%it)
             for i in range(len(params)):
@@ -323,9 +323,9 @@ class ShapeFitter:
                 model.from_params(params).draw_to_image(img,cv.CV_RGB(255,0,0))
                 cv.ShowImage("Opt step",img)
                 #"""
-                pD = nD = nnS = pnS = 0; #Debug
+                #pD = nD = nnS = pnS = 0; #Debug
                 new_params = list(params)
-                pD = deltas[i] #Debug
+                #pD = deltas[i] #Debug
                 new_params[i] += deltas[i]
                 tmpModel = model.from_params(new_params)
                 if(tmpModel != None):
@@ -345,7 +345,7 @@ class ShapeFitter:
                 cv.WaitKey()
                 cv.DestroyWindow("PD")
                 #"""
-                pnS = new_score #Debug
+                #pnS = new_score #Debug
                 if new_score > score:
                     params = new_params
                     score = new_score
@@ -353,7 +353,7 @@ class ShapeFitter:
                 else:
                     deltas[i] *= -1
                     new_params = list(params)
-                    nD = deltas[i] #Debug
+                    #nD = deltas[i] #Debug
                     new_params[i] += deltas[i]
                     tmpModel = model.from_params(new_params)
                     if(tmpModel != None):
@@ -373,7 +373,7 @@ class ShapeFitter:
                     cv.WaitKey()
                     cv.DestroyWindow("ND")
                     #"""
-                    nnS = new_score #Debug
+                    #nnS = new_score #Debug
                     if new_score > score:
                         params = new_params
                         score = new_score
@@ -384,7 +384,7 @@ class ShapeFitter:
                 #cv.WaitKey(200) #DEBUG
             
                 
-            self.printout("Current best score is %f"%score)
+            self.printout("Current best score is %f"%(score*visMult))
             if(self.SHOW):
                 img = cv.CloneImage(model.image)
                 tmpModel = model.from_params(params)
@@ -397,7 +397,9 @@ class ShapeFitter:
             if max([abs(d) for d in deltas]) < epsilon:
                 self.printout("BREAKING")
                 break
-        #cv.DestroyWindow("Opt step") #DEBUG        
+        #cv.DestroyWindow("Opt step") #DEBUG  
+        logging.info("Black box optimalization time %s"%str(datetime.now()-bi))
+        logging.info("Black box optimalization score %s"%str(score*visMult))
         return model.from_params(params)
         
     def printout(self,str):

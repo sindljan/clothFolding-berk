@@ -362,8 +362,8 @@ def get_fold_line(model,i):
             foldEnd = Vector2D.pt_center(bl,ls)
             foldLineCenter = Vector2D.pt_center(foldStart,foldEnd)
             # make foldline little bit bigger than conture
-            foldStart = Vector2D.scale_pt(foldStart,0.9,foldLineCenter)
-            foldEnd = Vector2D.scale_pt(foldEnd,0.9,foldLineCenter)
+            #foldStart = Vector2D.scale_pt(foldStart,0.9,foldLineCenter)
+            #foldEnd = Vector2D.scale_pt(foldEnd,0.9,foldLineCenter)
             # transfer points to corect data type
             foldStart = (int(Vector2D.pt_x(foldStart)),int(Vector2D.pt_y(foldStart)))
             foldEnd = (int(Vector2D.pt_x(foldEnd)),int(Vector2D.pt_y(foldEnd)))
@@ -427,14 +427,15 @@ def fit_model_to_image(model,image,iteration):
     num_iters = 15
     
     #Properly set phases
-    orient_opt     = True
+    orient_opt     = False
     symm_opt       = True
     asymm_opt      = True
     fine_tuning_opt= True
     if(iteration == 0): # different optimalization parameters for first fitting
         #asymm_opt       = False
         #fine_tuning_opt = False 
-        num_iters = 25       
+        orient_opt     = True
+        num_iters = 17       
     
     
     #Create an image to output
@@ -459,31 +460,31 @@ def fit_model_to_image(model,image,iteration):
     before = datetime.now()
     final_model = fitted_model = None
     #if(iteration > 0):                                                    
-    #    (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)
+    #   (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)
     
     (nearest_pts, final_model, fitted_model) = fitter.fit(model,shape_contour,image_out,image)   
     show_message("Fitting time %s"%str(datetime.now()-before), MsgTypes.info)
     
     """ save fitted model to the file
-    final_model.set_image(None)
-    modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
-    pickle.dump(final_model, open(modelPath,'w'))
+    if(final_model != None):
+        final_model.set_image(None)
+        modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+        pickle.dump(final_model, open(modelPath,'w'))
     #"""
     """ load fitted model from the file
     if(iteration < 1):
-        #modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
-        modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
+        modelPath = "/media/Data/models/tShirt_F_%0.1d.pickle" %iteration
+        #modelPath = "/media/Data/models/tShirt_paper_F_%0.1d.pickle" %iteration
         final_model = pickle.load(open(modelPath))
     #"""
-    
     #""" visualisation
     print "/**************Test****************/"
-    im1 = cv.CloneImage(image)
-    cv.NamedWindow("Fitted model")
-    if(fitted_model != None):
-        cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
-    cv.ShowImage("Fitted model",im1)
-    cv.WaitKey()
+    #im1 = cv.CloneImage(image)
+    #cv.NamedWindow("Fitted model")
+    #if(fitted_model != None):
+    #    cv.PolyLine(im1,[fitted_model.polygon_vertices_int()],1,cv.CV_RGB(0,255,0),1)               
+    #cv.ShowImage("Fitted model",im1)
+    #cv.WaitKey()
     
     im2 = cv.CloneImage(image)
     cv.NamedWindow("Final model")
@@ -492,7 +493,8 @@ def fit_model_to_image(model,image,iteration):
     cv.ShowImage("Final model",im2)
     
     cv.WaitKey()
-    cv.DestroyWindow("Fitted model")
+    cv.SaveImage("/media/Data/im%d.png"%iteration,im2);
+    #cv.DestroyWindow("Fitted model")
     cv.DestroyWindow("Final model")
     print "/************EndOfTest*************/"
     #"""
@@ -526,7 +528,7 @@ def take_picture(index):
     logging.debug("TAKE_PICTURE - Begin")
     takenImage = None
     
-    """ take a picture from Kinect
+    #""" take a picture from Kinect
     logging.debug("TAKE_PICTURE - Picture is from Kinect.")
     rospy.wait_for_service('get_kinect_image')
     try:
@@ -553,7 +555,7 @@ def take_picture(index):
     #cv.SaveImage("./im.png",takenImage)
     #"""
     
-    #""" take a picture from file
+    """ take a picture from file
     logging.debug("TAKE_PICTURE - Picture is from a file.")
     if(TYPE == ASYMM):
         path = "/media/Data/clothImages/towel/imT_%02d.png" % index

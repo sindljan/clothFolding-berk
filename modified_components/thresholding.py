@@ -78,8 +78,10 @@ def threshold(image,bg_mode,filter_pr2,crop_rect=None,cam_info=None,listener=Non
         upper_thresh = cv.CloneImage(image_hue)
         lower_thresh = cv.CloneImage(image_hue)
         black_thresh = cv.CloneImage(image_hue)
-        cv.Threshold( image_hue, upper_thresh, 90, 255, cv.CV_THRESH_BINARY) #upper_thresh = white for all h>80, black o/w
-        cv.Threshold( image_hue, lower_thresh, 35, 255, cv.CV_THRESH_BINARY_INV) #lower_thresh = white for all h<30, black o/w 
+        cv.Threshold( image_hue, upper_thresh, 90, 255, cv.CV_THRESH_BINARY) 
+        cv.Threshold( image_hue, lower_thresh, 30, 255, cv.CV_THRESH_BINARY_INV) 
+        #7.3 cv.Threshold( image_hue, upper_thresh, 90, 255, cv.CV_THRESH_BINARY) #upper_thresh = white for all h>80, black o/w
+        #7.3 cv.Threshold( image_hue, lower_thresh, 35, 255, cv.CV_THRESH_BINARY_INV) #lower_thresh = white for all h<30, black o/w 
         #cv.Threshold( image_hue, upper_thresh, 70, 255, cv.CV_THRESH_BINARY) 
         #cv.Threshold( image_hue, lower_thresh, 35, 255, cv.CV_THRESH_BINARY_INV) 
         cv.Threshold( image_gray, black_thresh, 1, 255, cv.CV_THRESH_BINARY) #black_thresh = black for pure black, white o/w
