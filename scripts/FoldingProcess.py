@@ -217,11 +217,28 @@ def get_new_grasp_points_position(points,foldLine):
     mirrored_pts = []
     for pt in points:
         if(pt != None):
-            mirrored_pts.append(Vector2D.mirror_pt(pt,foldLine))
+            mirrored_pts.append(Vector2D.mirror_pt(pt,Vector2D.make_ln_from_pts(foldLine[0],foldLine[1])))
         else:
             show_message("Some of the grasp points wasn't set.", MsgTypes.exception)
-        
-    show_message("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
+    
+    #""" Mirroring visualisation 
+    cv.NamedWindow("Mirroring visualisation")
+    img = img = cv.CreateImage((800,600),8,3)
+    # axis
+    cv.PolyLine(img,[foldLine],1,cv.CV_RGB(0,255,0),1)               
+    # source points
+    for pt in points:
+        intPt = (int(pt[0]),int(pt[1]))
+        cv.Circle(img,intPt,3,cv.CV_RGB(255,0,0),2)
+    # mirrored points
+    for pt in mirrored_pts:
+        intPt = (int(pt[0]),int(pt[1]))
+        cv.Circle(img,intPt,3,cv.CV_RGB(0,0,255),2)                
+    cv.ShowImage("Mirroring visualisationn",img)
+    cv.WaitKey()
+    cv.DestroyWindow("Mirroring visualisation")    
+    #""" Mirroring visualisation
+    #show_message("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
     return mirrored_pts
 
 ## Return a list of points to be grasped by a robot
@@ -427,7 +444,7 @@ def fit_model_to_image(model,image,iteration):
     background = thresholding.GREEN_BG
     silent = False # true = silent, false = verbose
     show_graphics = True
-    num_iters = 50 # towel 
+    num_iters = 100 # towel 
     #num_iters = 15
     
     #Properly set phases
@@ -435,12 +452,11 @@ def fit_model_to_image(model,image,iteration):
     symm_opt       = True
     asymm_opt      = True
     fine_tuning_opt= True
-    if(iteration == 0): # different optimalization parameters for first fitting
-        #asymm_opt       = False
-        #fine_tuning_opt = False 
-        orient_opt     = False
-        #num_iters = 17 #tshirt       
-        num_iters = 50 #towel
+    #if(iteration == 0): # different optimalization parameters for first fitting
+    #    #asymm_opt       = False
+    #    #fine_tuning_opt = False 
+    #    orient_opt     = False
+    #    num_iters = 17
     
     
     #Create an image to output
