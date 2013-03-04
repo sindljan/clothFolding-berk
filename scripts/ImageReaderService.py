@@ -1,6 +1,16 @@
 #!/usr/bin/env python
+#title           :ImageReaderService.py
+#description     :ROS service that subscribe images from Kinect device and keep last one in memory.
+#                 Somebody then can ask for the last image.
+#author          :Jan Sindler
+#conact          :sidnljan@fel.cvut.cz
+#date            :20130508
+#version         :1.0
+#usage           :./ImageReaderService.py
+#notes           :
+#python_version  :2.7.3  
+#==============================================================================
 
-#An package that provides folding process.
 import roslib; roslib.load_manifest('contour_model_folding')
 import rospy
 from sensor_msgs.msg import Image

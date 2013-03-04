@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+#title           :FoldingProcess.py
+#description     :This script is an implementation of "Cloth manipulation Layer". It connect clothing model
+#                 and robotic device together. This script also realize whole fitting, folding and 
+#                 clot manipulation processes.
+#author          :Jan Sindler
+#conact          :sidnljan@fel.cvut.cz
+#date            :20130508
+#version         :1.0
+#usage           :./FoldingProcess.py
+#notes           :
+#python_version  :2.7.3  
+#==============================================================================
 
 #An package that provides contour folding process.
 import roslib; roslib.load_manifest('contour_model_folding')
@@ -221,7 +233,7 @@ def get_new_grasp_points_position(points,foldLine):
         else:
             show_message("Some of the grasp points wasn't set.", MsgTypes.exception)
     
-    #""" Mirroring visualisation 
+    """ Mirroring visualisation 
     cv.NamedWindow("Mirroring visualisation")
     img = img = cv.CreateImage((800,600),8,3)
     # axis
@@ -237,7 +249,7 @@ def get_new_grasp_points_position(points,foldLine):
     cv.ShowImage("Mirroring visualisationn",img)
     cv.WaitKey()
     cv.DestroyWindow("Mirroring visualisation")    
-    #""" Mirroring visualisation
+    # Mirroring visualisation """
     #show_message("Move grasped points to: " + str(mirrored_pts), MsgTypes.info)
     return mirrored_pts
 

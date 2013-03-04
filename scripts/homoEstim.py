@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+#title           :homoEstim.py
+#description     :Help user to define corresponding points in picture. The points are than used for homography estimation.
+#author          :Jan Sindler
+#conact          :sidnljan@fel.cvut.cz
+#date            :20130508
+#version         :1.0
+#usage           :./homoEstim.py <path to source image>
+#notes           :
+#python_version  :2.7.3  
+#==============================================================================
 
 ##    @package cloth_models 
 # 	  Define shape models by hand.

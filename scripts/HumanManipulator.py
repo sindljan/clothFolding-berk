@@ -1,3 +1,16 @@
+#title           :HumanManipulator.py
+#description     :This class is an implementation of "Robot specific layer". The class implements Robot interface
+#                 and made it user friendly for human manipulation with clothing. Human in this case 
+#                 substitute robotic device.
+#author          :Jan Sindler
+#conact          :sidnljan@fel.cvut.cz
+#date            :20130508
+#version         :1.0
+#usage           :cannot be used alone
+#notes           :
+#python_version  :2.7.3  
+#==============================================================================
+
 import roslib; roslib.load_manifest('contour_model_folding')
 from RobInt import RobInt
 import rospy

@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+#title           :ImagePicker.py
+#description     :This script grab images from Kinect to HDD.
+#author          :Jan Sindler
+#conact          :sidnljan@fel.cvut.cz
+#date            :20130508
+#version         :1.0
+#usage           :./ImagePicker.py <starting_index> <suffix> <folder>
+#python_version  :2.7.3  
+#==============================================================================
 
 ##    @package conture_model_folding
 # Stores images from Kinect to HDD to defined folder
