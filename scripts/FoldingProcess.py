@@ -41,7 +41,7 @@ TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
-TYPE = ASYMM 	#Adjust to change which type of model is being created
+TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
 
 ## Begin of support classes --------------------------------------------
 
@@ -456,7 +456,7 @@ def fit_model_to_image(model,image,iteration):
     background = thresholding.GREEN_BG
     silent = False # true = silent, false = verbose
     show_graphics = True
-    num_iters = 100 # towel 
+    num_iters = 50 # towel 
     #num_iters = 15
     
     #Properly set phases
@@ -464,11 +464,11 @@ def fit_model_to_image(model,image,iteration):
     symm_opt       = True
     asymm_opt      = True
     fine_tuning_opt= True
-    #if(iteration == 0): # different optimalization parameters for first fitting
+    if(iteration == 0): # different optimalization parameters for first fitting
     #    #asymm_opt       = False
     #    #fine_tuning_opt = False 
-    #    orient_opt     = False
-    #    num_iters = 17
+        orient_opt     = False
+        num_iters = 17
     
     
     #Create an image to output

@@ -101,8 +101,8 @@ class HumanManipulator(RobInt):
 
         #""" take a picture from file
         logging.debug("TAKE_PICTURE - Picture is from a file.")
-        path = "/media/Data/clothImages/towel/imT_%02d.png" % index
-        #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+        #path = "/media/Data/clothImages/towel/imT_%02d.png" % index
+        path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
         
         try:
            takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
