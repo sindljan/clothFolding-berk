@@ -11,6 +11,7 @@ import pickle
 import numpy as np
 import tf
 import logging
+from HumanManipulator import HumanManipulator
 from clothing_models import Models
 from shape_window.ShapeWindow import *
 from shape_window import ShapeWindowUtils
@@ -28,7 +29,7 @@ TEE_SKEL = 3 		# Tee model
 #PANTS_SKEL = 4 		# Pants model
 #SOCK_SKEL = 5 		# Sock model
 
-TYPE = TEE_SKEL 	#Adjust to change which type of model is being created
+TYPE = ASYMM 	#Adjust to change which type of model is being created
 
 ## Begin of support classes --------------------------------------------
 
@@ -98,10 +99,12 @@ class FoldMaker:
 def main(args):
     init()
     imgStartIndex = 1
+    # Create instance of used robotic device
+    robDev = HumanManipulator()
     #take an initial image from camera
-    img = take_picture(imgStartIndex)
+    img = robDev.getImageOfObsObject(imgStartIndex)
     #compute a homography
-    H = get_homography()
+    H = robDev.get_homography()
     #unwarped the image. Turn the image into a top view.
     unw_img = unwrap_image(img,H,True)
     #Get initial model
@@ -118,10 +121,10 @@ def main(args):
         #create a new model with fold
         foldedModel = create_folded_model(model,unw_img,L)
         #excute a fold
-        if(execute_fold(model,foldedModel,L) != FoldResults.succesfull):
+        if(execute_fold(model,foldedModel,L,robDev) != FoldResults.succesfull):
             return 1
         #take an image
-        img = take_picture(imgStartIndex + i)
+        img = robDev.getImageOfObsObject(imgStartIndex + i)
         #unwarp image
         unw_img = unwrap_image(img,H)
         #fit the new model to the image
@@ -188,8 +191,9 @@ def unwrap_image(image, transformation, sc_correction = False):
 #   @param model The model of current state of an obseved object
 #   @param foldedModel The model how an observed object would look like after fold
 #   @param foldLine The fold line.
+#   @param robDev The robotic device used for manipulation with textile.
 #   @return Return how succesfull the folding process was.
-def execute_fold(model,foldedModel,foldLine):
+def execute_fold(model,foldedModel,foldLine,robDev):
     # selected points to be grasped
     gps = get_grasp_points(model,foldedModel,foldLine)
     if( gps == None):
@@ -197,11 +201,10 @@ def execute_fold(model,foldedModel,foldLine):
     # deffine a new positin of that points
     #raw_input("before getNewPositionOfGraspPoints...")
     np_gps = get_new_grasp_points_position(gps,foldLine)
-    # this part would be done by my hand. literally
-    # raw_input("Do the fold and hit enter...")
-        # grasped the points
-        # move the grasped points to the defined position
-        # ungrasp it
+    # grasp the points and lift them up
+    robDev.liftUp(gps)
+    # move the grasped points to the defined position and ungrasp
+    robDev.place(np_gps)
     return FoldResults.succesfull
 
 ## Return a list of new position of greasped points.
@@ -423,19 +426,21 @@ def fit_model_to_image(model,image,iteration):
     # initialization
     background = thresholding.GREEN_BG
     silent = False # true = silent, false = verbose
-    show_graphics = False
-    num_iters = 15
+    show_graphics = True
+    num_iters = 50 # towel 
+    #num_iters = 15
     
     #Properly set phases
-    orient_opt     = False
+    orient_opt     = True
     symm_opt       = True
     asymm_opt      = True
     fine_tuning_opt= True
     if(iteration == 0): # different optimalization parameters for first fitting
         #asymm_opt       = False
         #fine_tuning_opt = False 
-        orient_opt     = True
-        num_iters = 17       
+        orient_opt     = False
+        #num_iters = 17 #tshirt       
+        num_iters = 50 #towel
     
     
     #Create an image to output
@@ -524,79 +529,79 @@ def get_initial_model():
 #   Images are now stored on a local HDD
 #   @param index The index of image to be loaded
 #   @return The image loaded from a file
-def take_picture(index):
-    logging.debug("TAKE_PICTURE - Begin")
-    takenImage = None
+#def take_picture(index):
+    #logging.debug("TAKE_PICTURE - Begin")
+    #takenImage = None
     
     #""" take a picture from Kinect
-    logging.debug("TAKE_PICTURE - Picture is from Kinect.")
-    rospy.wait_for_service('get_kinect_image')
-    try:
-        service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
-        msg_resp = service() #call service and return image
-        imData = msg_resp.image
-    except rospy.ServiceException, e:
-        show_message("Image grabing service failed: %s."%e, MsgTypes.exception)
-        return None
+    #logging.debug("TAKE_PICTURE - Picture is from Kinect.")
+    #rospy.wait_for_service('get_kinect_image')
+    #try:
+        #service = rospy.ServiceProxy('get_kinect_image',GetImage) #create service
+        #msg_resp = service() #call service and return image
+        #imData = msg_resp.image
+    #except rospy.ServiceException, e:
+        #show_message("Image grabing service failed: %s."%e, MsgTypes.exception)
+        #return None
         
-    #convert it to format accepted by openCV
-    try:
-        bridge = CvBridge()
-        image = bridge.imgmsg_to_cv(imData,"bgr8")
-    except CvBridgeError, e:
-        show_message("Image conversion error: %s."%e, MsgTypes.exception)
-        return None
+    ##convert it to format accepted by openCV
+    #try:
+        #bridge = CvBridge()
+        #image = bridge.imgmsg_to_cv(imData,"bgr8")
+    #except CvBridgeError, e:
+        #show_message("Image conversion error: %s."%e, MsgTypes.exception)
+        #return None
     
-    #crop image
-    roi = (0,0,620,480) # x,y(from the top of the image),width,height
-    cropped = cv.GetSubRect(image,roi)
-    takenImage = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
-    cv.Copy(cropped,takenImage)
-    #cv.SaveImage("./im.png",takenImage)
-    #"""
+    ##crop image
+    #roi = (0,0,620,480) # x,y(from the top of the image),width,height
+    #cropped = cv.GetSubRect(image,roi)
+    #takenImage = cv.CreateImage(roi[2:],cv.IPL_DEPTH_8U,3);
+    #cv.Copy(cropped,takenImage)
+    ##cv.SaveImage("./im.png",takenImage)
+    ##"""
     
-    """ take a picture from file
-    logging.debug("TAKE_PICTURE - Picture is from a file.")
-    if(TYPE == ASYMM):
-        path = "/media/Data/clothImages/towel/imT_%02d.png" % index
-    elif(TYPE == TEE_SKEL):
-        path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
-        #path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
-    else:
-        show_message("Unknown model type.",MsgTypes.exception)
-        sys.exit()    
-    try:
-       takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
-    except:
-       print "File not found or cannot be loaded. Path = " + path
-       sys.exit()
-    #"""
+    ##""" take a picture from file
+    #logging.debug("TAKE_PICTURE - Picture is from a file.")
+    #if(TYPE == ASYMM):
+        #path = "/media/Data/clothImages/towel/imT_%02d.png" % index
+    #elif(TYPE == TEE_SKEL):
+        #path = "/media/Data/clothImages/tShirt/im_%02d.png" % index
+        ##path = "/media/Data/clothImages/tShirt/imF_%02d.png" % index
+    #else:
+        #show_message("Unknown model type.",MsgTypes.exception)
+        #sys.exit()    
+    #try:
+       #takenImage = cv.LoadImage(path,cv.CV_LOAD_IMAGE_COLOR)
+    #except:
+       #print "File not found or cannot be loaded. Path = " + path
+       #sys.exit()
+    ##"""
     
-    """ Show image from Kinect
-    cv.NamedWindow("Image from Kinect")
-    cv.ShowImage("Image from Kinect",takenImage)
-    cv.WaitKey()
-    #cv.DestroyWindow("Image from Kinect")
-    #"""
+    #""" Show image from Kinect
+    #cv.NamedWindow("Image from Kinect")
+    #cv.ShowImage("Image from Kinect",takenImage)
+    #cv.WaitKey()
+    ##cv.DestroyWindow("Image from Kinect")
+    ##"""
     
-    logging.debug("TAKE_PICTURE - End")
-    return takenImage
+    #logging.debug("TAKE_PICTURE - End")
+    #return takenImage
 
-## Compute and return homography between side and top view
-#
-#  It takes the current view into one directly above the table. Correspondence 
-#    between points was made by a hand.
-#  @return 3x3 homography matrix
-def get_homography():
-    # set up source points (model points)
-    srcPoints = cv.fromarray(np.matrix([[63, 343],[537, 367],[550, 137],[78, 123]], dtype=float))
-    # set up destination points (observed object points)
-    #dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
-    dstPoints = cv.fromarray(np.matrix([[22, 383],[608, 385],[541, 187],[100, 196]], dtype=float))
-    # compute homography
-    H = cv.CreateMat(3,3,cv.CV_32FC1)
-    cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
-    return H 
+### Compute and return homography between side and top view
+##
+##  It takes the current view into one directly above the table. Correspondence 
+##    between points was made by a hand.
+##  @return 3x3 homography matrix
+#def get_homography():
+    ## set up source points (model points)
+    #srcPoints = cv.fromarray(np.matrix([[63, 343],[537, 367],[550, 137],[78, 123]], dtype=float))
+    ## set up destination points (observed object points)
+    ##dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
+    #dstPoints = cv.fromarray(np.matrix([[22, 383],[608, 385],[541, 187],[100, 196]], dtype=float))
+    ## compute homography
+    #H = cv.CreateMat(3,3,cv.CV_32FC1)
+    #cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
+    #return H 
     
 ## Show a message according to the setup verbosity and append a proper label
 #

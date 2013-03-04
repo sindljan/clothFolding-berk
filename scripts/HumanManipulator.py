@@ -3,10 +3,14 @@ from RobInt import RobInt
 import rospy
 import cv
 import logging
+import sys
+import numpy as np
 
 # HumanManipulator class represent robotic manipualtor simulated by human being.
       
 class HumanManipulator(RobInt):  
+
+    lastImageIndex = 0
       
     def liftUp(self, liftPoints):
         print "Grasp and lift up following points:"
@@ -15,8 +19,18 @@ class HumanManipulator(RobInt):
             return
         for pt in liftPoints:
             print pt
-        raw_input("Hit key to continue")
             
+        cv.NamedWindow("Fold visualisation")
+        img = self.getImageOfObsObject(self.lastImageIndex)
+        unw_img = self.__unwarp_image(img)
+        for pt in liftPoints:
+            cv.Circle(unw_img,pt,3,cv.CV_RGB(255,0,0),2)               
+        cv.ShowImage("Fold visualisation",unw_img)
+        cv.WaitKey()
+        cv.DestroyWindow("Fold visualisation")
+        
+        #raw_input("Hit key to continue")
+                    
     def place(self, targPoints):
         print "Place grasped objects to following points:"
         if(targPoints == None):
@@ -24,7 +38,16 @@ class HumanManipulator(RobInt):
             return
         for pt in targPoints:
             print pt
-        raw_input("Hit key to continue")
+        cv.NamedWindow("Fold visualisation")
+        img = self.getImageOfObsObject(self.lastImageIndex)
+        unw_img = self.__unwarp_image(img)
+        for pt in targPoints:
+            intPt = (int(pt[0]),int(pt[1]))
+            cv.Circle(unw_img,intPt,3,cv.CV_RGB(0,0,255),2)               
+        cv.ShowImage("Fold visualisation",unw_img)
+        cv.WaitKey()
+        cv.DestroyWindow("Fold visualisation")
+        #raw_input("Hit key to continue")
 
 
     ##  Load an image grabed by a camera.
@@ -35,7 +58,7 @@ class HumanManipulator(RobInt):
     def getImageOfObsObject(self, index):
         logging.debug("TAKE_PICTURE - Begin")
         takenImage = None
-
+        self.lastImageIndex = index
         """ take a picture from Kinect
         logging.debug("TAKE_PICTURE - Picture is from Kinect.")
         rospy.wait_for_service('get_kinect_image')
@@ -84,3 +107,46 @@ class HumanManipulator(RobInt):
 
         logging.debug("TAKE_PICTURE - End")
         return takenImage
+        
+    ## Compute and return homography between side and top view
+    #
+    #  It takes the current view into one directly above the table. Correspondence 
+    #    between points was made by a hand.
+    #  @return 3x3 homography matrix
+    def get_homography(self):
+        # set up source points (model points)
+        srcPoints = cv.fromarray(np.matrix([[63, 343],[537, 367],[550, 137],[78, 123]], dtype=float))
+        # set up destination points (observed object points)
+        #dstPoints = cv.fromarray(np.matrix([[120,285],[420,359],[455,186],[228,143]], dtype=float))
+        dstPoints = cv.fromarray(np.matrix([[22, 383],[608, 385],[541, 187],[100, 196]], dtype=float))
+        # compute homography
+        H = cv.CreateMat(3,3,cv.CV_32FC1)
+        cv.FindHomography(srcPoints,dstPoints,H) #def. setting is [method=0,ransacReprojThreshold=3.0,status=None]
+        return H 
+        
+        
+#private support methods
+        
+    ## Remove perspective distortion from image. 
+    #
+    #   In fact this function creates a top view from side view.
+    #   @param image An input image with perspective distortion
+    #   @return Return top view image.
+    def __unwarp_image(self,image):
+        H = self.get_homography()
+        # do the image center correciton
+        
+        # calculate transformation between image centers
+        src_center = [cv.GetSize(image)[0]/2,cv.GetSize(image)[1]/2]
+        z = 1./(H[2,0]*src_center[0]+H[2,1]*src_center[1]+H[2,2])
+        dstX = (H[0,0]*src_center[0]+H[0,1]*src_center[1]+H[0,2])*z
+        dstY = (H[1,0]*src_center[0]+H[1,1]*src_center[1]+H[1,2])*z
+        
+        # now when we know corespondence between centres we can update transformation
+        H[0,2] += src_center[0] - dstX
+        H[1,2] += src_center[1] - dstY
+        
+        # do the transformation
+        unw_img = cv.CreateImage((640,480),cv.IPL_DEPTH_8U,3)
+        cv.WarpPerspective(image,unw_img,H, cv.CV_INTER_LINEAR+cv.CV_WARP_FILL_OUTLIERS+cv.CV_WARP_INVERSE_MAP, (0,0,0,0)) # pixels that are out of the image are set to black
+        return unw_img

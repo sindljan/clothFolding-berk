@@ -27,7 +27,7 @@ def make_sparse(contour,num_pts = 1000):
 
 #Abstract model class        
 class Model:
-    def name(semf):
+    def name(self):
         abstract
     def preferred_delta(self):
         return 35.0
