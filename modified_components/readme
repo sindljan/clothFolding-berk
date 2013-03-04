@@ -5,4 +5,4 @@ Models.py        ../../../visual_feedback/clothing_models/src/clothing_models/Mo
 shape_fitting.py ../../../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/shape_fitting.py
 thresholding.py  ../../../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/thresholding.py
 model_maker.py   ../../../visual_feedback/clothing_models/scripts/model_maker.py
-
+Vector2D.py      ../../../visual_feedback/visual_feedback_utils/src/visual_feedback_utils/Vector2D.py

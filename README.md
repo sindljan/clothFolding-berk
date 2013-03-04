@@ -17,6 +17,27 @@ All demand packages should be almost found on the git repositories at https://gi
 Then update all scrips from folder ./modified\_components/
 And it should be all.
 
+
+Instalation step-by-step notes
+-----------------------------------
+1) Download clothFolding from repository
+    rosws set contour_model_folding --git https://github.com/sindljan/clothFolding-berk.git
+
+2) Download depended ros packages
+    rosws set visual_feedback --git https://github.com/rll/visual_feedback.git 
+    rosws set berkley_utils --git https://github.com/rll/berkeley_utils.git
+    rosws set folding --git https://github.com/rll/folding.git
+
+3) Update all packages that were added
+    rosws update
+
+4) Make package
+    rosmake clopema_cloth_folding
+
+5) Update modified scripts according to description from ./modified\_components/readme file.
+
+
+
 Notes
 -----------------------------------
 I am using this scrips on virtual machine with Ubuntu Precise 12.04 hosted on Win7 32b. It's litle bit trycky to make Kinect works on virtual machine. OpenNi drivers doesn't work. The freenect drivers are the right once. 
